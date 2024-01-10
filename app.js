@@ -1,26 +1,77 @@
 import * as THREE from 'three';
+import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
+
+const renderer = new THREE.WebGLRenderer;
+
+renderer.setSize(window.innerWidth, window.innerHeight);
+
+document.body.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
 
-const renderer = new THREE.WebGLRenderer();
-renderer.setSize( window.innerWidth, window.innerHeight );
-document.body.appendChild( renderer.domElement );
+const camera = new THREE.PerspectiveCamera(
+    45,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    1000
+);
 
-const geometry = new THREE.BoxGeometry( 1, 1, 1 );
-const material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
-const cube = new THREE.Mesh( geometry, material );
-scene.add( cube );
+const orbit = new OrbitControls(camera,renderer.domElement);
 
-camera.position.z = 5;
+camera.position.set(10,15,-22);
+orbit.update();
 
-function animate() {
-    requestAnimationFrame( animate );
+const planeMesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(20,20),
+    new THREE.MeshBasicMaterial({
+        side: THREE.DoubleSide,
+        visible: false
+    })
+);
+planeMesh.rotateX(-Math.PI / 2);
+scene.add(planeMesh);
+planeMesh.name = 'ground';
 
-    cube.rotation.x += 0.01;
-    cube.rotation.y += 0.01;
+const grid = new THREE.GridHelper(20,20);
+scene.add(grid);
 
-    renderer.render( scene, camera );
+
+const highlightMesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(1,1),
+    new THREE.MeshBasicMaterial({
+        side: THREE.DoubleSide,
+    })
+);
+highlightMesh.rotateX(-Math.PI / 2);
+highlightMesh.position.set(0.5,0,0.5);
+scene.add(highlightMesh);
+
+const mousePosition = new THREE.Vector2();
+const raycaster = new THREE.Raycaster();
+let intersects;
+
+window.addEventListener('mousemove',function(e){
+    console.log("d")
+    mousePosition.x = (e.clientX / window.innerWidth) * 2 - 1;
+    mousePosition.y = (e.clientY / window.innerHeight) * 2 + 1;
+    raycaster.setFromCamera(mousePosition, camera);
+    intersects = raycaster.intersectObjects(scene.children);
+    intersects.forEach(function(intersect){
+        if (intersect.object.name === 'ground'){
+            const highlightPos = new THREE.Vector3().copy(intersect.point).floor().addScalar(0.5);
+            highlightMesh.position.set(highlightPos.x,0,highlightPos.z);
+        }
+    })
+});
+function animate(){
+    renderer.render(scene,camera);
 }
 
-animate();
+renderer.setAnimationLoop(animate);
+
+window.addEventListener('resize', function(){
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
