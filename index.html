@@ -2,16 +2,42 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tiles</title>
+    <title>Object Placement UI</title>
     <style>
         body {
-            margin: 0
+            margin: 0;
+            overflow: hidden;
+        }
+
+        #uiContainer {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 1;
+        }
+
+        button {
+            cursor: pointer;
+            padding: 8px;
+            border: none;
+            border-radius: 3px;
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
-<script src="app.js" type="module"></script>
+<div id="uiContainer">
+    <button id="selectYellow">Select Yellow Cube</button>
+    <button id="selectWhite">Select White Cube</button>
+    <button id="selectDelete">Select Delete</button>
+</div>
+<script type="module" src="app.js"></script>
 </body>
 </html>
