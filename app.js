@@ -1,6 +1,9 @@
 import * as THREE from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
-import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader'
+import {FBXLoader} from 'three/examples/jsm/loaders/FBXLoader';
+
+import {GRID_SIZE, selection} from "./globals";
+
 let fbxObject;
 let fbxObject2;
 
@@ -16,21 +19,21 @@ const selectWhiteBtn = document.getElementById('selectWhite');
 const selectDeleteBtn = document.getElementById('selectDelete');
 
 // Flag to indicate the current selection mode
-let selectionMode = 'yellow'; // Default to yellow cube
+let selectionMode = selection.BUILDING_1; // Default to yellow cube
 
 // Event listeners for UI buttons
 selectYellowBtn.addEventListener('click', function () {
-    selectionMode = 'yellow';
+    selectionMode = selection.BUILDING_1;
     console.log('Selected: Yellow Cube');
 });
 
 selectWhiteBtn.addEventListener('click', function () {
-    selectionMode = 'white';
+    selectionMode = selection.BUILDING_2;
     console.log('Selected: White Cube');
 });
 
 selectDeleteBtn.addEventListener('click', function () {
-    selectionMode = 'delete';
+    selectionMode = selection.DELETE;
     console.log('Selected: Delete');
 });
 
@@ -72,23 +75,22 @@ orbit.maxPolarAngle = Math.PI / 2;
 orbit.enablePan = false;
 
 
-
 camera.position.set(10, 15, -22);
 
 orbit.update();
 
 const fbxLoader = new FBXLoader();
 fbxLoader.load('/Assets/bina2.fbx', (object) => {
-    object.scale.set(.07,.09,.09);
+    object.scale.set(.07, .09, .09);
     fbxObject = object;
-} )
+})
 
-fbxLoader.load('Assets/building.fbx',(object) => {
-    object.scale.set(.025,.03,.05);
+fbxLoader.load('Assets/building.fbx', (object) => {
+    object.scale.set(.025, .03, .05);
     fbxObject2 = object;
 })
 const planeMesh = new THREE.Mesh(
-    new THREE.PlaneGeometry(60, 60), // Change size to represent a 3x3 grid
+    new THREE.PlaneGeometry(GRID_SIZE, GRID_SIZE), // Change size to represent a 3x3 grid
     new THREE.MeshBasicMaterial({
         side: THREE.DoubleSide,
         visible: false
@@ -101,14 +103,14 @@ const grid = new THREE.GridHelper(62, 62); // Change size to represent a 3x3 gri
 scene.add(grid);
 
 const deleteMesh = new THREE.Mesh(
-    new THREE.PlaneGeometry(1,1),
+    new THREE.PlaneGeometry(1, 1),
     new THREE.MeshBasicMaterial({
         side: THREE.DoubleSide,
         transparent: true
     })
 );
 deleteMesh.rotateX(-Math.PI / 2);
-deleteMesh.position.set(1,0,1);
+deleteMesh.position.set(1, 0, 1);
 deleteMesh.material.color.setHex(0xFFFFFF);
 scene.add(deleteMesh);
 
@@ -148,7 +150,7 @@ window.addEventListener('mousemove', function (e) {
     if (intersects.length > 0) {
         const intersect = intersects[0];
         let gridSize = 3;
-        if (selectionMode === 'white') {
+        if (selectionMode === selection.BUILDING_2) {
             usedHighlight = highlightMesh2;
             gridSize = 5; // Adjust gridSize for the second building
         }
@@ -156,35 +158,31 @@ window.addEventListener('mousemove', function (e) {
         // Calculate the center of the 3x3 grid based on the mouse position
         const highlightPos = new THREE.Vector3().copy(intersect.point).floor().addScalar(gridSize / 2 - 1);
 
-        if(selectionMode ==  'yellow'){
+        if (selectionMode == selection.BUILDING_1) {
             usedHighlight.position.set(highlightPos.x, 0, highlightPos.z);
-        }
-        else if(selectionMode == 'white') {
+        } else if (selectionMode == selection.BUILDING_2) {
             usedHighlight.position.set(highlightPos.x - 1, 0, highlightPos.z - 1);
-        }
-        else if(selectionMode == 'delete'){
+        } else if (selectionMode == selection.DELETE) {
             deleteMesh.position.set(highlightPos.x, 0, highlightPos.z);
         }
 
 
         // Check for intersections with existing objects in both horizontal and vertical directions
         const isIntersection = objects.some(function (object) {
-            if(selectionMode == 'yellow'){
-                if (object.name == 'group1'){
+            if (selectionMode == selection.BUILDING_1) {
+                if (object.name == 'group1') {
                     return (
                         Math.abs(object.position.x - highlightMesh.position.x) <= 3 &&
                         Math.abs(object.position.z - highlightMesh.position.z) <= 3
                     );
-                }
-                else{
+                } else {
                     return (
                         Math.abs(object.position.x - highlightMesh.position.x) <= 5 &&
                         Math.abs(object.position.z - highlightMesh.position.z) <= 5
                     )
                 }
-            }
-            else{
-                if (object.name == 'group1'){
+            } else {
+                if (object.name == 'group1') {
                     return (
                         Math.abs(object.position.x - highlightMesh2.position.x) <= 5 &&
                         Math.abs(object.position.z - highlightMesh2.position.z) <= 5
@@ -211,48 +209,44 @@ window.addEventListener('mousedown', function (event) {
     if (event.button === 0) {
         let intersectedObject;
         const isIntersection = objects.some(function (object) {
-            if(selectionMode == 'yellow'){
-                if (object.name == 'group1'){
+            if (selectionMode == selection.BUILDING_1) {
+                if (object.name == 'group1') {
                     if (Math.abs(object.position.x - highlightMesh.position.x) <= 3 &&
-                        Math.abs(object.position.z - highlightMesh.position.z) <= 3){
+                        Math.abs(object.position.z - highlightMesh.position.z) <= 3) {
                         intersectedObject = object;
                         return true;
                     }
-                }
-                else{
+                } else {
                     if (Math.abs(object.position.x - highlightMesh.position.x) <= 5 &&
-                        Math.abs(object.position.z - highlightMesh.position.z) <= 5){
+                        Math.abs(object.position.z - highlightMesh.position.z) <= 5) {
                         intersectedObject = object;
                         return true;
                     }
                 }
-            }
-            else if (selectionMode == 'white'){
-                if (object.name == 'group1'){
+            } else if (selectionMode == selection.BUILDING_2) {
+                if (object.name == 'group1') {
                     if (Math.abs(object.position.x - highlightMesh2.position.x) <= 5 &&
-                        Math.abs(object.position.z - highlightMesh2.position.z) <= 5){
+                        Math.abs(object.position.z - highlightMesh2.position.z) <= 5) {
                         intersectedObject = object;
                         return true;
                     }
-                }
-                else{
+                } else {
                     if (Math.abs(object.position.x - highlightMesh2.position.x) <= 5 &&
-                        Math.abs(object.position.z - highlightMesh2.position.z) <= 5){
+                        Math.abs(object.position.z - highlightMesh2.position.z) <= 5) {
                         intersectedObject = object;
                         return true;
                     }
                 }
-            }
-            else if (selectionMode == 'delete'){
+            } else if (selectionMode == selection.DELETE) {
                 if (Math.abs(object.position.x - deleteMesh.position.x) <= 1 &&
-                    Math.abs(object.position.z - deleteMesh.position.z) <= 1){
+                    Math.abs(object.position.z - deleteMesh.position.z) <= 1) {
                     intersectedObject = object;
                     return true;
                 }
             }
         });
-        if (isIntersection){
-            if(selectionMode == 'delete'){
+        if (isIntersection) {
+            if (selectionMode == selection.DELETE) {
                 const index = objects.indexOf(intersectedObject);
 
                 if (index !== -1) {
@@ -266,13 +260,13 @@ window.addEventListener('mousedown', function (event) {
 
         if (!isIntersection) {
             if (intersects.length > 0) {
-                if (selectionMode === 'yellow') {
+                if (selectionMode === selection.BUILDING_1) {
                     const buildingClone = fbxObject.clone();
                     buildingClone.position.copy(highlightMesh.position);
                     scene.add(buildingClone);
                     objects.push(buildingClone);
                     highlightMesh.material.color.setHex(0x00FF00);
-                } else if (selectionMode === 'white') {
+                } else if (selectionMode === selection.BUILDING_2) {
                     const building2Clone = fbxObject2.clone();
                     building2Clone.position.copy(highlightMesh2.position);
                     scene.add(building2Clone);
@@ -312,17 +306,15 @@ window.addEventListener('keydown', function (event) {
 
 function animate(time) {
     orbit.update();
-    if (selectionMode == 'yellow'){
+    if (selectionMode == selection.BUILDING_1) {
         scene.remove(highlightMesh2);
         scene.remove(deleteMesh);
         scene.add(highlightMesh);
-    }
-    else if (selectionMode == 'white') {
+    } else if (selectionMode == selection.BUILDING_2) {
         scene.remove(highlightMesh);
         scene.remove(deleteMesh);
         scene.add(highlightMesh2);
-    }
-    else{
+    } else {
         scene.remove(highlightMesh);
         scene.remove(highlightMesh2);
     }
@@ -333,7 +325,7 @@ function animate(time) {
 
 renderer.setAnimationLoop(animate);
 
-window.addEventListener('resize', function() {
+window.addEventListener('resize', function () {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);

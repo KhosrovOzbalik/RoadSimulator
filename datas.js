@@ -1,4 +1,3 @@
-import "./algorithmUtilities"
 import {dijkstra, minimumSpanningTree} from "./algorithmUtilities";
 
 class Graph {
@@ -16,18 +15,19 @@ class Graph {
     }
 }
 
-let grid; // X'e x array
-let graph = new Graph(); // tüm şehirleri birbirine bağlayan graph
+export let grid; // X'e x array
+export let graph = new Graph(); // tüm şehirleri birbirine bağlayan graph
+
 let buildings = []; // Şehir array'i
 
 let buildingId = 0;
 
-function addCity(coords) {
+export function addCity(coords) {
     buildings.push({coords: coords, id: buildingId});
     buildingId += 1;
 }
 
-function removeCity(id) {
+export function removeCity(id) {
     for (let i = 0; i < buildings.length; i++) {
         if (buildings[i].id === id) {
             buildings.splice(i, 1);
@@ -36,7 +36,7 @@ function removeCity(id) {
     }
 }
 
-function constructGraph() {
+export function constructGraph() {
     buildings.forEach((element) => {
         graph.addVertex(element.id);
     });
