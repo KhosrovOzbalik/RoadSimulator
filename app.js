@@ -6,6 +6,7 @@ import {GRID_SIZE, selection} from "./globals";
 
 let fbxObject;
 let fbxObject2;
+let direction = 0;
 
 
 const renderer = new THREE.WebGLRenderer();
@@ -102,6 +103,17 @@ scene.add(planeMesh);
 const grid = new THREE.GridHelper(62, 62); // Change size to represent a 3x3 grid
 scene.add(grid);
 
+const doorMesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(1,1),
+    new THREE.MeshBasicMaterial({
+        side: THREE.DoubleSide,
+        transparent: true
+    })
+);
+doorMesh.rotateX(-Math.PI / 2);
+doorMesh.position.set(1.5, 0, 1.5); // Adjust position for a 3x3 grid
+scene.add(doorMesh);
+
 const deleteMesh = new THREE.Mesh(
     new THREE.PlaneGeometry(1, 1),
     new THREE.MeshBasicMaterial({
@@ -160,6 +172,18 @@ window.addEventListener('mousemove', function (e) {
 
         if (selectionMode == selection.BUILDING_1) {
             usedHighlight.position.set(highlightPos.x, 0, highlightPos.z);
+            if (direction % 4 == 0){
+                doorMesh.position.set(usedHighlight.position.x,0,usedHighlight.position.z + 2);
+            }
+            else if (direction % 4 == 1){
+                doorMesh.position.set(usedHighlight.position.x - 2,0,usedHighlight.position.z);
+            }
+            else if (direction % 4 == 2){
+                doorMesh.position.set(usedHighlight.position.x,0,usedHighlight.position.z - 2);
+            }
+            else if (direction % 4 == 3){
+                doorMesh.position.set(usedHighlight.position.x + 2,0,usedHighlight.position.z);
+            }
         } else if (selectionMode == selection.BUILDING_2) {
             usedHighlight.position.set(highlightPos.x - 1, 0, highlightPos.z - 1);
         } else if (selectionMode == selection.DELETE) {
@@ -300,6 +324,18 @@ window.addEventListener('keydown', function (event) {
             // Move camera right
             camera.position.x += 1;
             break;
+        case 'e':
+            // Rotate highlight mesh to the right (clockwise)
+            direction += 1;
+            fbxObject.rotateY(-Math.PI / 2);
+            fbxObject2.rotateY(Math.PI / 2);
+            break;
+        case 'q':
+            direction += 3;
+            // Rotate highlight mesh to the left (counterclockwise)
+            fbxObject.rotateY(+Math.PI / 2);
+            fbxObject2.rotateY(-Math.PI / 2);
+            break;
     }
 });
 
@@ -319,6 +355,7 @@ function animate(time) {
         scene.remove(highlightMesh2);
     }
     highlightMesh.material.opacity = 1 + Math.sin(time / 120);
+    doorMesh.material.opacity = 1 + Math.sin(time / 120);
     highlightMesh2.material.opacity = 1 + Math.sin(time / 120);
     renderer.render(scene, camera);
 }
