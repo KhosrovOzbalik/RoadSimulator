@@ -91,6 +91,7 @@ fbxLoader.load('Assets/building.fbx', (object) => {
     object.scale.set(.025, .03, .05);
     fbxObject2 = object;
 })
+
 const planeMesh = new THREE.Mesh(
     new THREE.PlaneGeometry(GRID_SIZE, GRID_SIZE), // Change size to represent a 3x3 grid
     new THREE.MeshBasicMaterial({
@@ -127,28 +128,24 @@ deleteMesh.position.set(1, 0, 1);
 deleteMesh.material.color.setHex(0xFFFFFF);
 scene.add(deleteMesh);
 
-const highlightMesh = new THREE.Mesh(
-    new THREE.PlaneGeometry(3, 3), // Change size to represent a 3x3 grid
-    new THREE.MeshBasicMaterial({
-        side: THREE.DoubleSide,
-        transparent: true
-    })
-);
+function generateMesh(size) {
+    return new THREE.Mesh(
+        new THREE.PlaneGeometry(size, size), // Change size to represent a 3x3 grid
+        new THREE.MeshBasicMaterial({
+            side: THREE.DoubleSide,
+            transparent: true
+        }));
+}
+
+const highlightMesh = generateMesh(3);
+
 highlightMesh.rotateX(-Math.PI / 2);
 highlightMesh.position.set(1.5, 0, 1.5); // Adjust position for a 3x3 grid
-scene.add(highlightMesh);
 
-const highlightMesh2 = new THREE.Mesh(
-    new THREE.PlaneGeometry(5, 5), // Change size to represent a 3x3 grid
-    new THREE.MeshBasicMaterial({
-        side: THREE.DoubleSide,
-        transparent: true
-    })
-);
+const highlightMesh2 = generateMesh(5);
 
 highlightMesh2.rotateX(-Math.PI / 2);
 highlightMesh2.position.set(1.5, 0, 1.5);
-scene.add(highlightMesh2);
 
 const mousePosition = new THREE.Vector2();
 const raycaster = new THREE.Raycaster();
@@ -157,73 +154,7 @@ let intersects;
 window.addEventListener('mousemove', function (e) {
     mousePosition.x = (e.clientX / window.innerWidth) * 2 - 1;
     mousePosition.y = -(e.clientY / window.innerHeight) * 2 + 1;
-    raycaster.setFromCamera(mousePosition, camera);
-    intersects = raycaster.intersectObject(planeMesh);
-    let usedHighlight = highlightMesh;
-    if (intersects.length > 0) {
-        const intersect = intersects[0];
-        let gridSize = 3;
-        if (selectionMode === selection.BUILDING_2) {
-            usedHighlight = highlightMesh2;
-            gridSize = 5; // Adjust gridSize for the second building
-        }
 
-        // Calculate the center of the 3x3 grid based on the mouse position
-        const highlightPos = new THREE.Vector3().copy(intersect.point).floor().addScalar(gridSize / 2 - 1);
-
-        if (selectionMode == selection.BUILDING_1) {
-            usedHighlight.position.set(highlightPos.x, 0, highlightPos.z);
-            if (direction % 4 == 0) {
-                doorMesh.position.set(usedHighlight.position.x, 0, usedHighlight.position.z + 2);
-            } else if (direction % 4 == 1) {
-                doorMesh.position.set(usedHighlight.position.x - 2, 0, usedHighlight.position.z);
-            } else if (direction % 4 == 2) {
-                doorMesh.position.set(usedHighlight.position.x, 0, usedHighlight.position.z - 2);
-            } else if (direction % 4 == 3) {
-                doorMesh.position.set(usedHighlight.position.x + 2, 0, usedHighlight.position.z);
-            }
-        } else if (selectionMode == selection.BUILDING_2) {
-            usedHighlight.position.set(highlightPos.x - 1, 0, highlightPos.z - 1);
-        } else if (selectionMode == selection.DELETE) {
-            deleteMesh.position.set(highlightPos.x, 0, highlightPos.z);
-        }
-
-
-        // Check for intersections with existing objects in both horizontal and vertical directions
-        const isIntersection = objects.some(function (object) {
-            if (selectionMode == selection.BUILDING_1) {
-                if (object.name == 'group1') {
-                    return (
-                        Math.abs(object.position.x - highlightMesh.position.x) <= 3 &&
-                        Math.abs(object.position.z - highlightMesh.position.z) <= 3
-                    );
-                } else {
-                    return (
-                        Math.abs(object.position.x - highlightMesh.position.x) <= 5 &&
-                        Math.abs(object.position.z - highlightMesh.position.z) <= 5
-                    )
-                }
-            } else {
-                if (object.name == 'group1') {
-                    return (
-                        Math.abs(object.position.x - highlightMesh2.position.x) <= 5 &&
-                        Math.abs(object.position.z - highlightMesh2.position.z) <= 5
-                    );
-                }
-                return (
-                    Math.abs(object.position.x - highlightMesh2.position.x) <= 5 &&
-                    Math.abs(object.position.z - highlightMesh2.position.z) <= 5
-                )
-            }
-        });
-
-        if (isIntersection) {
-            usedHighlight.material.color.setHex(0xFF0000); // Red color for intersection
-        } else {
-            usedHighlight.material.color.setHex(0x00FF00); // Green color for no intersection
-            doorMesh.material.color.setHex(0x00FF00);
-        }
-    }
 });
 
 const objects = [];
@@ -340,6 +271,76 @@ window.addEventListener('keydown', function (event) {
 
 
 function animate(time) {
+    raycaster.setFromCamera(mousePosition, camera);
+    intersects = raycaster.intersectObject(planeMesh);
+
+    if (intersects.length > 0) {
+        const intersect = intersects[0];
+
+        let usedHighlight = highlightMesh;
+        let gridSize = 3;
+        if (selectionMode === selection.BUILDING_2) {
+            usedHighlight = highlightMesh2;
+            gridSize = 5; // Adjust gridSize for the second building
+        }
+
+        // Calculate the center of the 3x3 grid based on the mouse position
+        const highlightPos = new THREE.Vector3().copy(intersect.point).floor().addScalar(gridSize / 2 - 1);
+
+        if (selectionMode == selection.BUILDING_1) {
+            usedHighlight.position.set(highlightPos.x, 0, highlightPos.z);
+            if (direction % 4 == 0) {
+                doorMesh.position.set(usedHighlight.position.x, 0, usedHighlight.position.z + 2);
+            } else if (direction % 4 == 1) {
+                doorMesh.position.set(usedHighlight.position.x - 2, 0, usedHighlight.position.z);
+            } else if (direction % 4 == 2) {
+                doorMesh.position.set(usedHighlight.position.x, 0, usedHighlight.position.z - 2);
+            } else if (direction % 4 == 3) {
+                doorMesh.position.set(usedHighlight.position.x + 2, 0, usedHighlight.position.z);
+            }
+        } else if (selectionMode == selection.BUILDING_2) {
+            usedHighlight.position.set(highlightPos.x - 1, 0, highlightPos.z - 1);
+        } else if (selectionMode == selection.DELETE) {
+            deleteMesh.position.set(highlightPos.x, 0, highlightPos.z);
+        }
+
+
+        // Check for intersections with existing objects in both horizontal and vertical directions
+        const isIntersection = objects.some(function (object) {
+            if (selectionMode == selection.BUILDING_1) {
+                if (object.name == 'group1') {
+                    return (
+                        Math.abs(object.position.x - highlightMesh.position.x) <= 3 &&
+                        Math.abs(object.position.z - highlightMesh.position.z) <= 3
+                    );
+                } else {
+                    return (
+                        Math.abs(object.position.x - highlightMesh.position.x) <= 5 &&
+                        Math.abs(object.position.z - highlightMesh.position.z) <= 5
+                    )
+                }
+            } else {
+                if (object.name == 'group1') {
+                    return (
+                        Math.abs(object.position.x - highlightMesh2.position.x) <= 5 &&
+                        Math.abs(object.position.z - highlightMesh2.position.z) <= 5
+                    );
+                }
+                return (
+                    Math.abs(object.position.x - highlightMesh2.position.x) <= 5 &&
+                    Math.abs(object.position.z - highlightMesh2.position.z) <= 5
+                )
+            }
+        });
+
+        if (isIntersection) {
+            usedHighlight.material.color.setHex(0xFF0000); // Red color for intersection
+        } else {
+            usedHighlight.material.color.setHex(0x00FF00); // Green color for no intersection
+            doorMesh.material.color.setHex(0x00FF00);
+        }
+    }
+
     orbit.update();
     if (selectionMode == selection.BUILDING_1) {
         scene.remove(highlightMesh2);
