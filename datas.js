@@ -55,3 +55,61 @@ function connectCities() {
         }
     }
 }
+
+
+
+
+/*
+
+function findMinimumSpanningTree(graph) {
+    const visited = {};
+    const edges = [];
+
+    const startVertex = Object.keys(graph.vertices)[0];
+    visited[startVertex] = true;
+
+    graph.vertices[startVertex].forEach(edge => {
+        edges.push({ node1: startVertex, node2: edge.node, weight: edge.weight });
+    });
+
+    const mst = [];
+
+    while (edges.length > 0) {
+        edges.sort((a, b) => a.weight - b.weight);
+        const minEdge = edges.shift();
+
+        const { node1, node2, weight } = minEdge;
+        const otherNode = visited[node1] ? node2 : node1;
+
+        if (!visited[otherNode]) {
+            visited[otherNode] = true;
+            mst.push({ node1, node2, weight });
+
+            graph.vertices[otherNode].forEach(edge => {
+                if (!visited[edge.node]) {
+                    edges.push({ node1: otherNode, node2: edge.node, weight: edge.weight });
+                }
+            });
+        }
+    }
+
+    return mst;
+}
+
+
+const graphh = new Graph();
+
+graphh.addVertex('A');
+graphh.addVertex('B');
+graphh.addVertex('C');
+graphh.addVertex('D');
+
+graphh.addEdge('A', 'B', 3);
+graphh.addEdge('B', 'C', 5);
+graphh.addEdge('A', 'C', 2);
+graphh.addEdge('A', 'D', 15);
+graphh.addEdge('B', 'D', 3);
+graphh.addEdge('C', 'D', 5);
+
+const result = findMinimumSpanningTree(graphh);
+console.log(result);*/
