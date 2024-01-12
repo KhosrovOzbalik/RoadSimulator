@@ -3,6 +3,7 @@ import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 import {FBXLoader} from 'three/examples/jsm/loaders/FBXLoader';
 
 import {GRID_SIZE, selection} from "./globals";
+import {MeshObject, Building} from "./objects";
 
 let fbxObject;
 let fbxObject2;
@@ -104,7 +105,7 @@ const grid = new THREE.GridHelper(62, 62); // Change size to represent a 3x3 gri
 scene.add(grid);
 
 const doorMesh = new THREE.Mesh(
-    new THREE.PlaneGeometry(1,1),
+    new THREE.PlaneGeometry(1, 1),
     new THREE.MeshBasicMaterial({
         side: THREE.DoubleSide,
         transparent: true
@@ -172,17 +173,14 @@ window.addEventListener('mousemove', function (e) {
 
         if (selectionMode == selection.BUILDING_1) {
             usedHighlight.position.set(highlightPos.x, 0, highlightPos.z);
-            if (direction % 4 == 0){
-                doorMesh.position.set(usedHighlight.position.x,0,usedHighlight.position.z + 2);
-            }
-            else if (direction % 4 == 1){
-                doorMesh.position.set(usedHighlight.position.x - 2,0,usedHighlight.position.z);
-            }
-            else if (direction % 4 == 2){
-                doorMesh.position.set(usedHighlight.position.x,0,usedHighlight.position.z - 2);
-            }
-            else if (direction % 4 == 3){
-                doorMesh.position.set(usedHighlight.position.x + 2,0,usedHighlight.position.z);
+            if (direction % 4 == 0) {
+                doorMesh.position.set(usedHighlight.position.x, 0, usedHighlight.position.z + 2);
+            } else if (direction % 4 == 1) {
+                doorMesh.position.set(usedHighlight.position.x - 2, 0, usedHighlight.position.z);
+            } else if (direction % 4 == 2) {
+                doorMesh.position.set(usedHighlight.position.x, 0, usedHighlight.position.z - 2);
+            } else if (direction % 4 == 3) {
+                doorMesh.position.set(usedHighlight.position.x + 2, 0, usedHighlight.position.z);
             }
         } else if (selectionMode == selection.BUILDING_2) {
             usedHighlight.position.set(highlightPos.x - 1, 0, highlightPos.z - 1);
@@ -223,6 +221,7 @@ window.addEventListener('mousemove', function (e) {
             usedHighlight.material.color.setHex(0xFF0000); // Red color for intersection
         } else {
             usedHighlight.material.color.setHex(0x00FF00); // Green color for no intersection
+            doorMesh.material.color.setHex(0x00FF00);
         }
     }
 });

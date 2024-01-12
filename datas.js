@@ -1,29 +1,39 @@
 import {dijkstra, minimumSpanningTree} from "./algorithmUtilities";
+import {GRID_SIZE} from "./globals";
+import {Building} from "./objects";
 
 class Graph {
     constructor() {
-        this.vertices = {};
+        this.doors = {};
     }
 
     addVertex(vertex) {
-        this.vertices[vertex] = [];
+        this.doors[vertex] = [];
     }
 
     addEdge(vertex1, vertex2, weight) {
-        this.vertices[vertex1].push({node: vertex2, weight});
-        this.vertices[vertex2].push({node: vertex1, weight});
+        this.doors[vertex1].push({node: vertex2, weight});
+        this.doors[vertex2].push({node: vertex1, weight});
     }
 }
 
-export let grid; // X'e x array
+export let grid;
+for (let i = 0; i < GRID_SIZE; i++) {
+    let gridItem;
+    for (let j = 0; j < GRID_SIZE; j++) {
+        gridItem.push(false);
+    }
+    grid.push(gridItem);
+}
+
 export let graph = new Graph(); // tüm şehirleri birbirine bağlayan graph
 
 let buildings = []; // Şehir array'i
 
 let buildingId = 0;
 
-export function addCity(coords) {
-    buildings.push({coords: coords, id: buildingId});
+export function addCity(building) {
+    buildings.push({object: building, id: buildingId});
     buildingId += 1;
 }
 
@@ -49,14 +59,12 @@ function connectCities() {
     for (let i = 0; i < buildings.length; i++) {
         for (let j = i; j < buildings.length; j++) {
             if (j === i) continue;
-            const city1 = buildings[i];
-            const city2 = buildings[j];
-            graph.addEdge(city1, city2, dijkstra(grid, city1.coords, city2.coords));
+            const building1 = buildings[i];
+            const building2 = buildings[j];
+            graph.addEdge(building1.id, building2.id, dijkstra(grid, building1.doorPosition, building2.doorPosition).length);
         }
     }
 }
-
-
 
 
 /*
