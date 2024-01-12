@@ -18,26 +18,26 @@ class Graph {
 
 let grid; // X'e x array
 let graph = new Graph(); // tüm şehirleri birbirine bağlayan graph
-let cities = []; // Şehir array'i
+let buildings = []; // Şehir array'i
 
-let cityId = 0;
+let buildingId = 0;
 
 function addCity(coords) {
-    cities.push({coords: coords, id: cityId});
-    cityId += 1;
+    buildings.push({coords: coords, id: buildingId});
+    buildingId += 1;
 }
 
 function removeCity(id) {
-    for (let i = 0; i < cities.length; i++) {
-        if (cities[i].id === id) {
-            cities.splice(i, 1);
+    for (let i = 0; i < buildings.length; i++) {
+        if (buildings[i].id === id) {
+            buildings.splice(i, 1);
             break;
         }
     }
 }
 
 function constructGraph() {
-    cities.forEach((element) => {
+    buildings.forEach((element) => {
         graph.addVertex(element.id);
     });
     connectCities();
@@ -46,11 +46,11 @@ function constructGraph() {
 }
 
 function connectCities() {
-    for (let i = 0; i < cities.length; i++) {
-        for (let j = i; j < cities.length; j++) {
+    for (let i = 0; i < buildings.length; i++) {
+        for (let j = i; j < buildings.length; j++) {
             if (j === i) continue;
-            const city1 = cities[i];
-            const city2 = cities[j];
+            const city1 = buildings[i];
+            const city2 = buildings[j];
             graph.addEdge(city1, city2, dijkstra(grid, city1.coords, city2.coords));
         }
     }
