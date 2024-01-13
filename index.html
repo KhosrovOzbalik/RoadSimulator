@@ -22,6 +22,18 @@
             border-radius: 5px;
             z-index: 1;
         }
+        #sliderContainer {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 1;
+        }
 
         button {
             cursor: pointer;
@@ -34,10 +46,21 @@
 </head>
 <body>
 <div id="uiContainer">
-    <button id="selectYellow">Select Yellow Cube</button>
-    <button id="selectWhite">Select White Cube</button>
-    <button id="selectDelete">Select Delete</button>
+    <button id="selectYellow" style = "width:80px;height: 90px"><img src="building1.jpg"></button>
+    <button id="selectWhite" style = "width:80px;height: 90px"><img src="building2.jpg"></button>
+    <button id="selectDelete" style = "width:40px;height: 40px"><img src="delete.png"></button>
+</div>
+<div id="sliderContainer">
+    <label for="lightX">Light X coordinate:</label>
+    <input type="range" id="lightX" name="lightX" min="-40" max="40" value="0">
+
+    <label for="lightZ">Light Z coordinate:</label>
+    <input type="range" id="lightZ" name="lightZ" min="-40" max="40" value="0">
+
+    <label for="intensity">Intensity:</label>
+    <input type="range" id="intensity" name="intensity" min="0" max="400" value="200">
 </div>
 <script type="module" src="app.js"></script>
+
 </body>
 </html>
