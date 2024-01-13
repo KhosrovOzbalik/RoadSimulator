@@ -4,6 +4,7 @@ import {FBXLoader} from 'three/examples/jsm/loaders/FBXLoader';
 
 import {GRID_SIZE, selection} from "./globals";
 import {MeshObject, Building} from "./objects";
+import {isIntersect} from "./algorithmUtilities";
 
 let fbxObject;
 let fbxObject2;
