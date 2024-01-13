@@ -224,6 +224,7 @@ window.addEventListener('mousedown', function (event) {
                 } else if (selectionMode === selection.BUILDING_2) {
                     const building2Clone = fbxObject2.clone();
                     building2Clone.position.copy(highlightMesh2.position);
+                    building2Clone.position.z += 0.5
                     let building;
                     building = new Building(generateMeshCoordinatesFive(highlightMesh2),(Math.floor(doorMesh.position.x),Math.floor(doorMesh.position.z)));
                     addCity(building);
