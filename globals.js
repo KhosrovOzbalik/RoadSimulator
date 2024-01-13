@@ -1,4 +1,4 @@
-export const GRID_SIZE = 60;
+export const GRID_SIZE = 62;
 
 export const selection = Object.freeze({
     BUILDING_1: "Building 1",

@@ -1,3 +1,5 @@
+import {GRID_SIZE} from "./globals";
+
 function minimumSpanningTree(graph) {
     const visited = {};
     const edges = [];
@@ -88,10 +90,9 @@ function reconstructPath(previous, start, end) {
 }
 
 function isIntersect(grid, meshCoords) {
-    for (const coords in meshCoords) {
-        if (grid[coords[0]][coords[1]]) {
+    for (let i = 0; i < meshCoords.length; i++) {
+        if (grid[meshCoords[i][0] + (GRID_SIZE -2) /2][meshCoords[i][1] + (GRID_SIZE-2)/2])
             return true;
-        }
     }
     return false;
 }

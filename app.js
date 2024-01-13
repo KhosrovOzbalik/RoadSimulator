@@ -95,7 +95,7 @@ fbxLoader.load('Assets/building.fbx', (object) => {
 })
 
 const planeMesh = new THREE.Mesh(
-    new THREE.PlaneGeometry(GRID_SIZE, GRID_SIZE), // Change size to represent a 3x3 grid
+    new THREE.PlaneGeometry(GRID_SIZE-2, GRID_SIZE-2), // Change size to represent a 3x3 grid
     new THREE.MeshBasicMaterial({
         side: THREE.DoubleSide,
         visible: false
@@ -104,7 +104,7 @@ const planeMesh = new THREE.Mesh(
 planeMesh.rotateX(-Math.PI / 2);
 scene.add(planeMesh);
 
-const gridHelper = new THREE.GridHelper(62, 62); // Change size to represent a 3x3 grid
+const gridHelper = new THREE.GridHelper(GRID_SIZE, GRID_SIZE); // Change size to represent a 3x3 grid
 scene.add(gridHelper);
 
 const doorMesh = new THREE.Mesh(
@@ -184,20 +184,15 @@ const objects = [];
 window.addEventListener('mousedown', function (event) {
     if (event.button === 0) {
         let intersectedObject;
-        const isIntersection = objects.some(function (object) {
-            if (selectionMode == selection.BUILDING_1) {
-                for (let i = 0; i < 9; i++) {
-                    return (grid[generateMeshCoordinatesThree(highlightMesh)[i][0] + 30][generateMeshCoordinatesThree(highlightMesh)[i][1] + 30]);
-                }
-            }
-            else if (selectionMode == selection.BUILDING_2) {
-                for (let i = 0; i < 25; i++) {
-                    return (grid[generateMeshCoordinatesFive(highlightMesh)[i][0] + 30][generateMeshCoordinatesFive(highlightMesh)[i][1] + 30]);
-                }
-            } else if (selectionMode == selection.DELETE) {
-                return (grid[Math.floor(deleteMesh.position.x) + 30][Math.floor(deleteMesh.position.x) + 30]);
-            }
-        });
+        let isIntersection;
+        if (selectionMode == selection.BUILDING_1) {
+            isIntersection = isIntersect(grid,generateMeshCoordinatesThree(highlightMesh));
+        }
+        else if (selectionMode == selection.BUILDING_2) {
+            isIntersection = isIntersect(grid,generateMeshCoordinatesFive(highlightMesh2));
+        } else if (selectionMode == selection.DELETE) {
+             isIntersection = (grid[Math.floor(deleteMesh.position.x) + 30][Math.floor(deleteMesh.position.x) + 30]);
+        };
         if (isIntersection) {
             if (selectionMode == selection.DELETE) {
                 const index = objects.indexOf(intersectedObject);
@@ -232,9 +227,11 @@ window.addEventListener('mousedown', function (event) {
                     let building;
                     building = new Building(generateMeshCoordinatesFive(highlightMesh2),(Math.floor(doorMesh.position.x),Math.floor(doorMesh.position.z)));
                     addCity(building);
+                    console.log(generateMeshCoordinatesFive(highlightMesh2))
                     for (let i = 0; i < 25; i++) {
-                        grid[generateMeshCoordinatesFive(highlightMesh)[i][0] + 30][generateMeshCoordinatesFive(highlightMesh)[i][1] + 30] = true;
+                        grid[generateMeshCoordinatesFive(highlightMesh2)[i][0] + 30][generateMeshCoordinatesFive(highlightMesh2)[i][1] + 30] = true;
                     }
+                    console.log(grid)
                     scene.add(building2Clone);
                     objects.push(building2Clone);
                     highlightMesh2.material.color.setHex(0x00FF00);
@@ -315,22 +312,14 @@ function animate(time) {
         } else if (selectionMode == selection.DELETE) {
             deleteMesh.position.set(highlightPos.x, 0, highlightPos.z);
         }
+        let isIntersection
 
-
-        // Check for intersections with existing objects in both horizontal and vertical directions
-        const isIntersection = objects.some(function (object) {
-            if (selectionMode == selection.BUILDING_1) {
-                for (let i = 0; i < 9; i++) {
-                    return (grid[generateMeshCoordinatesThree(highlightMesh)[i][0] + 30][generateMeshCoordinatesThree(highlightMesh)[i][1] + 30]);
-                }
-            }
-            else if (selectionMode == selection.BUILDING_2) {
-                for (let i = 0; i < 25; i++) {
-                    return (grid[generateMeshCoordinatesFive(highlightMesh)[i][0] + 30][generateMeshCoordinatesFive(highlightMesh)[i][1] + 30]);
-                }
-            }
-        });
-
+        if (selectionMode == selection.BUILDING_1) {
+            isIntersection =  isIntersect(grid,generateMeshCoordinatesThree(highlightMesh));
+        }
+        else if (selectionMode == selection.BUILDING_2) {
+            isIntersection =  isIntersect(grid,generateMeshCoordinatesFive(highlightMesh2));
+        }
         if (isIntersection) {
             usedHighlight.material.color.setHex(0xFF0000); // Red color for intersection
         } else {
