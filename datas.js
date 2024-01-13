@@ -17,9 +17,9 @@ class Graph {
     }
 }
 
-export let grid;
+export let grid = [];
 for (let i = 0; i < GRID_SIZE; i++) {
-    let gridItem;
+    let gridItem = [];
     for (let j = 0; j < GRID_SIZE; j++) {
         gridItem.push(false);
     }
