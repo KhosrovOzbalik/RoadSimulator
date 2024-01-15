@@ -1,6 +1,5 @@
 import {dijkstra, minimumSpanningTree} from "./algorithmUtilities";
 import {GRID_SIZE} from "./globals";
-import {CityBuilding} from "./objects";
 
 class Graph {
     constructor() {
@@ -29,28 +28,42 @@ for (let i = 0; i < GRID_SIZE; i++) {
 export let graph = new Graph(); // tüm şehirleri birbirine bağlayan graph
 
 let buildings = []; // Şehir array'i
+
 export let roads = [];
 
-export function addCity(doorGridPos, buildingId) {
+
+export function addCity(doorGridPos,buildingId) {
+    //console.log(buildingId);
     buildings.push({door: doorGridPos, id: buildingId});
 }
 
 export function removeCity(buildingId) {
     for (let i = 0; i < buildings.length; i++) {
         if (buildings[i].id === buildingId) {
-            buildings.splice(i, 1);
+             buildings.splice(i, 1);
             break;
         }
     }
+    console.log(buildings);
 }
 
 export function constructGraph() {
+    graph.doors = {};
+    //console.log(graph);
+    //console.log("aa");
+    //console.log(buildings);
+    //console.log("bb");
     buildings.forEach((element) => {
+
         graph.addVertex(element.id);
     });
-    connectCities();
+    
 
-    minimumSpanningTree(graph);
+    if(!connectCities()){
+        console.log("optimum yol bulunamadı");
+        return null;
+    }
+    return minimumSpanningTree(graph);
 }
 
 function connectCities() {
@@ -59,13 +72,23 @@ function connectCities() {
             if (j === i) continue;
             const building1 = buildings[i];
             const building2 = buildings[j];
-            graph.addEdge(building1.id, building2.id, dijkstra(grid, building1.door, building2.door).length);
+            var dist =  dijkstra(grid, building1.door, building2.door).length;
+            if(dist == null){
+                return false;
+            }
+            graph.addEdge(building1.id, building2.id, dist);
+            //graph.addEdge(building1.id, building2.id, 5);
         }
     }
+    return true;
 }
 
 
-/*const graphh = new Graph();
+
+
+
+
+const graphh = new Graph();
 
 graphh.addVertex('A');
 graphh.addVertex('B');
@@ -79,7 +102,7 @@ graphh.addEdge('A', 'C', 2);
 graphh.addEdge('A', 'D', 15);
 graphh.addEdge('B', 'D', 3);
 
-console.log(graphh.doors);*/
+//console.log(graphh.doors);
 
-//const result = findMinimumSpanningTree(graphh);
+const result = minimumSpanningTree(graphh);
 //console.log(result);

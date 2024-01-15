@@ -3,8 +3,8 @@ import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 import {FBXLoader} from 'three/examples/jsm/loaders/FBXLoader';
 
 import {GRID_SIZE, selection} from "./globals";
-import {AssetsObject, Building,CityBuilding} from "./objects";
-import {addCity,graph,grid, removeCity} from "./datas";
+import {AssetsObject, Building} from "./objects";
+import {addCity,graph,grid, removeCity, constructGraph} from "./datas";
 
 const renderer = new THREE.WebGLRenderer();
 
@@ -183,15 +183,19 @@ function FindSelectedAssetsObject(){
     return selectedAssetsObjectTemp;
 }
 
+export var doorPoses = [];
 
 const raycaster = new THREE.Raycaster();
 let intersects;
+var aa = false;
 window.addEventListener('mousedown', function (event) {
+    event.stopImmediatePropagation();
     if (event.button === 0) {
-        
+        console.log("lan");
+        aa = true;
         raycaster.setFromCamera(mousePosition, camera);
         intersects = raycaster.intersectObject(planeMesh);
-
+        
         if (intersects.length > 0) {
             const intersect = intersects[0];
             var mousePosOnGrid = new THREE.Vector2(intersect.point.x,intersect.point.z).round();
@@ -206,8 +210,11 @@ window.addEventListener('mousedown', function (event) {
                 scene.add(buildingClone);
                 selectedAssetsObject.SetOccupying(mousePosOnGrid,grid);
                 //console.log(mousePosOnGrid.clone().add(selectedAssetsObject.doorGridPos));
+                doorPoses.push(mousePosOnGrid.clone().add(selectedAssetsObject.doorGridPos));
+                console.log(buildingClone.name);
                 addCity(mousePosOnGrid.clone().add(selectedAssetsObject.doorGridPos), buildingClone.name);
-                console.log(graph);
+                
+                //console.log(graph);
             }
         }
     }
@@ -221,21 +228,29 @@ window.addEventListener('mousedown', function (event) {
             while(par.parent.type !== "Scene"){
                 par = par.parent;
             } 
-            assets[parseInt(par.name.split(" ")[0])].SetFree(new THREE.Vector2(par.position.x,par.position.z),grid,par.name.split(" ")[2]);
+            //console.log(doorPoses);
+            var doorPosV2 = assets[parseInt(par.name.split(" ")[0])].SetFree(new THREE.Vector2(par.position.x,par.position.z),grid,par.name.split(" ")[2], 1);
+            doorPoses = doorPoses.filter((element)=>{ return element.x !=doorPosV2.x || element.y !=doorPosV2.y;});
+            
+            
             scene.remove(par);
             removeCity(par.name);
-            console.log(graph);
+            //console.log(graph);
 
         }
     }   
     else if(event.button === 2){
-        constructGraph() ;
+        
+        
     }
 });
 window.addEventListener('contextmenu', function (event) {
-    event.preventDefault();
+   // event.preventDefault();
 });
-window.addEventListener('keydown', function (event) {
+
+window.addEventListener('keydown', function (event) {    
+    event.stopImmediatePropagation();
+    console.log("tuşa basıldı");
     switch (event.key) {
         case 'w':
             // Move camera forward
@@ -259,11 +274,20 @@ window.addEventListener('keydown', function (event) {
         case 'q':
             selectedAssetsObject.RotateCCW(Math.PI/2);
             break;
+        case 'z':
+            var mst = constructGraph();
+            if(mst != null){
+                console.log(mst);
+            }
+            break;
     }
 });
 
-
+var start = 0;
 function animate(time) {
+
+    //console.log(1000/(time-start));
+    start = time;
     raycaster.setFromCamera(mousePosition, camera);
     intersects = raycaster.intersectObject(planeMesh);
 
