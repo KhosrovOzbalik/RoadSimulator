@@ -4,10 +4,10 @@ function minimumSpanningTree(graph) {
     const visited = {};
     const edges = [];
 
-    const startVertex = Object.keys(graph.vertices)[0];
+    const startVertex = Object.keys(graph.doors)[0];
     visited[startVertex] = true;
 
-    graph.vertices[startVertex].forEach(edge => {
+    graph.doors[startVertex].forEach(edge => {
         edges.push({node1: startVertex, node2: edge.node, weight: edge.weight});
     });
 
@@ -24,7 +24,7 @@ function minimumSpanningTree(graph) {
             visited[otherNode] = true;
             mst.push({node1, node2, weight});
 
-            graph.vertices[otherNode].forEach(edge => {
+            graph.doors[otherNode].forEach(edge => {
                 if (!visited[edge.node]) {
                     edges.push({node1: otherNode, node2: edge.node, weight: edge.weight});
                 }
@@ -36,6 +36,18 @@ function minimumSpanningTree(graph) {
 }
 
 function dijkstra(grid, node1, node2) {
+
+    let start;
+    let end;
+    if(Array.isArray(node1)){
+        start = node1;
+        end = node2;
+    }
+    else{
+        start = [node1.y,node1.x];
+        end = [node2.y,node2.x];
+    }
+
     const rows = grid.length;
     const cols = grid[0].length;
     const distances = Array.from({length: rows}, () => Array(cols).fill(Infinity));
