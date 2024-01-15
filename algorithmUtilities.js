@@ -89,15 +89,8 @@ function reconstructPath(previous, start, end) {
     return path;
 }
 
-function isIntersect(grid, meshCoords) {
-    /*for (let i = 0; i < meshCoords.length; i++) {
-        if (grid[meshCoords[i][0] + (GRID_SIZE -2) /2][meshCoords[i][1] + (GRID_SIZE-2)/2])
-            return true;
-    }*/
-    return false;
-}
 
-export {minimumSpanningTree, dijkstra, isIntersect};
+export {minimumSpanningTree, dijkstra};
 /*
 // Example usage:
 const grid = [

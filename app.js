@@ -3,20 +3,18 @@ import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 import {FBXLoader} from 'three/examples/jsm/loaders/FBXLoader';
 
 import {GRID_SIZE, selection} from "./globals";
-import {AssetsObject, Building} from "./objects";
-import {addCity,grid} from "./datas";
-import {isIntersect} from "./algorithmUtilities";
-
-let fbxObject;
-let fbxObject2;
-let direction = 0;
-
+import {AssetsObject, Building,CityBuilding} from "./objects";
+import {addCity,graph,grid, removeCity} from "./datas";
 
 const renderer = new THREE.WebGLRenderer();
 
 renderer.setSize(window.innerWidth, window.innerHeight);
 
 document.body.appendChild(renderer.domElement);
+
+
+
+
 
 const selectYellowBtn = document.getElementById('selectYellow');
 const selectWhiteBtn = document.getElementById('selectWhite');
@@ -28,11 +26,13 @@ let selectionMode = selection.BUILDING_1; // Default to yellow cube
 // Event listeners for UI buttons
 selectYellowBtn.addEventListener('click', function () {
     selectionMode = selection.BUILDING_1;
+    selectedAssetsObject = FindSelectedAssetsObject();
     console.log('Selected: Yellow Cube');
 });
 
 selectWhiteBtn.addEventListener('click', function () {
     selectionMode = selection.BUILDING_2;
+    selectedAssetsObject = FindSelectedAssetsObject();
     console.log('Selected: White Cube');
 });
 
@@ -41,24 +41,9 @@ selectDeleteBtn.addEventListener('click', function () {
     console.log('Selected: Delete');
 });
 
-// Update the object placement logic based on the current selection mode
-window.addEventListener('mousedown', function (event) {
-    if (event.button === 0) {
-        // Your existing object placement logic goes here
-
-        console.log(scene.children.length);
-    }
-});
-
 const scene = new THREE.Scene();
 
-const light = new THREE.PointLight(0xffffff, 50);
-light.position.set(30, 20, 30);
-scene.add(light);
 
-const ambientLight = new THREE.AmbientLight();
-ambientLight.position.set(30, 20, 30);
-scene.add(ambientLight);
 
 const camera = new THREE.PerspectiveCamera(
     45,
@@ -80,21 +65,9 @@ orbit.maxPolarAngle = Math.PI / 2;
 orbit.enablePan = false;
 orbit.target.set(GRID_SIZE/2.0-0.5,0,GRID_SIZE/2.0-0.5);
 
-
 camera.position.set(30, 50, 60);
 
 orbit.update();
-
-const fbxLoader = new FBXLoader();
-fbxLoader.load('/Assets/bina2.fbx', (object) => {
-    object.scale.set(.07, .09, .09);
-    fbxObject = object;
-})
-
-fbxLoader.load('Assets/building.fbx', (object) => {
-    object.scale.set(.025, .03, .05);
-    fbxObject2 = object;
-})
 
 const planeMesh = new THREE.Mesh(
     new THREE.PlaneGeometry(GRID_SIZE, GRID_SIZE), // Change size to represent a 3x3 grid
@@ -111,152 +84,152 @@ const gridHelper = new THREE.GridHelper(GRID_SIZE, GRID_SIZE); // Change size to
 gridHelper.position.set(GRID_SIZE/2.0-0.5,0,GRID_SIZE/2.0-0.5);
 scene.add(gridHelper);
 
-const doorMesh = new THREE.Mesh(
-    new THREE.PlaneGeometry(1, 1),
-    new THREE.MeshBasicMaterial({
-        side: THREE.DoubleSide,
-        transparent: true
-    })
-);
-doorMesh.rotateX(-Math.PI / 2);
-doorMesh.position.set(1.5, 0, 1.5); // Adjust position for a 3x3 grid
-scene.add(doorMesh);
 
-const deleteMesh = new THREE.Mesh(
-    new THREE.PlaneGeometry(1, 1),
-    new THREE.MeshBasicMaterial({
-        side: THREE.DoubleSide,
-        transparent: true
-    })
-);
-deleteMesh.rotateX(-Math.PI / 2);
-deleteMesh.position.set(1, 0, 1);
-deleteMesh.material.color.setHex(0xFFFFFF);
-scene.add(deleteMesh);
+const light = new THREE.PointLight(0xffffff, 50);
+light.position.set(30, 20, 30);
+//scene.add(light);
 
- function generateMesh(size) {
-    return new THREE.Mesh(
-        new THREE.PlaneGeometry(size, size), // Change size to represent a 3x3 grid
-        new THREE.MeshBasicMaterial({
-            side: THREE.DoubleSide,
-            transparent: true
-        }));
-}
+const ambientLight = new THREE.AmbientLight();
+ambientLight.position.set(30, 20, 30);
+scene.add(ambientLight);
 
- function generateMesh2(size1,size2) {
-    return new THREE.Mesh(
-        new THREE.PlaneGeometry(size1, size2), // Change size to represent a 3x3 grid
-        new THREE.MeshBasicMaterial({
-            side: THREE.DoubleSide,
-            transparent: true
-        }));
-}
 
-function generateMeshCoordinatesThree(highlightMesh){
-    let temp = [];
-    for (let i = 0; i < 3; i++) {
 
-        for (let j = 0; j < 3; j++) {
-            temp.push([Math.floor(highlightMesh.position.x + i),Math.floor(highlightMesh.position.z + j)]);
+
+
+
+
+const assets = [];
+
+
+var denemefbxObject = new Building(new THREE.Vector2(1,1),new THREE.Vector2(1,1),null,new THREE.Vector2(0,2),selection.BUILDING_1,scene,assets);
+var denemefbxObject2 = new Building(new THREE.Vector2(2,2),new THREE.Vector2(2,2),null,new THREE.Vector2(0,3),selection.BUILDING_2,scene,assets);
+
+var selectedAssetsObject = FindSelectedAssetsObject();
+
+
+
+const fbxLoader = new FBXLoader();
+fbxLoader.load('Assets/evyeni/ev.fbx', (object) => {
+    object.scale.set(.005, .01, .005);
+    object.rotateY(-Math.PI/2);
+    //console.log(object.name);
+    let light;
+    let yol;
+    let tas;
+    object.traverse(function (child) {
+             //console.log(child);
+             if(child.type == "DirectionalLight")
+             {
+               light = child;
+             }
+             else if(child.name == "yol")
+             {
+               yol = child;
+             }
+             else if(child.name == "taslar")
+             {
+               tas = child;
+             }
+         })
+         object.remove(light,tas,yol);
+         denemefbxObject.fbxObject =object.clone();
+})
+
+/*fbxLoader.load('Assets/yolyeni/yeniyol.fbx', (object) => {
+    object.scale.set(.005, .005, .005);
+    let light;
+    object.traverse(function (child) {
+        //console.log(child);
+        if(child.type == "PointLight")
+        {
+          light = child;
         }
-    }
-    return temp;
-}
-function generateMeshCoordinatesFive(highlightMesh){
-    let temp = [];
-    for (let i = 0; i < 5; i++) {
-        for (let j = 0; j < 5; j++) {
-            temp.push([Math.floor(highlightMesh.position.x + i),Math.floor(highlightMesh.position.z + j)]);
-        }
-    }
-    return temp;
-}
+    })
+    object.remove(light);
+    denemefbxObject2.fbxObject = object.clone();
+    
+})*/
 
+fbxLoader.load('Assets/building.fbx', (object) => {
+    //console.log(object);
+    object.scale.set(.025, .03, .05);
+    denemefbxObject2.fbxObject = object.clone();
+})
 
-
-const highlightMesh = generateMesh(3);
-
-highlightMesh.rotateX(-Math.PI / 2);
-highlightMesh.position.set(1.5, 0, 1.5); // Adjust position for a 3x3 grid
-
-const highlightMesh2 = generateMesh(5);
-
-highlightMesh2.rotateX(-Math.PI / 2);
-highlightMesh2.position.set(1.5, 0, 1.5);
 
 const mousePosition = new THREE.Vector2();
-const raycaster = new THREE.Raycaster();
-let intersects;
-
 window.addEventListener('mousemove', function (e) {
     mousePosition.x = (e.clientX / window.innerWidth) * 2 - 1;
     mousePosition.y = -(e.clientY / window.innerHeight) * 2 + 1;
 
 });
 
-const objects = [];
+
+function FindSelectedAssetsObject(){
+    if(selectedAssetsObject != null){
+        selectedAssetsObject.highlightMesh.visible = false;
+    }
+    
+    let selectedAssetsObjectTemp;
+    for (let i = 0; i < assets.length; i++) {
+        if(selectionMode == assets[i].selectionMode){
+            //console.log("aaa");
+            selectedAssetsObjectTemp = assets[i];
+            //console.log(selectedAssetsObject.fbxObject);
+            break;
+        }            
+    }
+    return selectedAssetsObjectTemp;
+}
 
 
+const raycaster = new THREE.Raycaster();
+let intersects;
 window.addEventListener('mousedown', function (event) {
     if (event.button === 0) {
-        let intersectedObject;
-        let isIntersection;
-        if (selectionMode == selection.BUILDING_1) {
-            isIntersection = isIntersect(grid,generateMeshCoordinatesThree(highlightMesh));
-        }
-        else if (selectionMode == selection.BUILDING_2) {
-            isIntersection = isIntersect(grid,generateMeshCoordinatesFive(highlightMesh2));
-        } else if (selectionMode == selection.DELETE) {
-             isIntersection = (grid[Math.floor(deleteMesh.position.x) + 30][Math.floor(deleteMesh.position.x) + 30]);
-        };
-        if (isIntersection) {
-            if (selectionMode == selection.DELETE) {
-                const index = objects.indexOf(intersectedObject);
-                if (index !== -1) {
-                    scene.remove(intersectedObject);
-                    objects.splice(index, 1);
-                    highlightMesh.material.color.setHex(0x00FF00);
-                    console.log('Deleted an object');
-                }
-            }
-        }
+        
+        raycaster.setFromCamera(mousePosition, camera);
+        intersects = raycaster.intersectObject(planeMesh);
 
-        if (!isIntersection) {
-            if (intersects.length > 0) {
-                if (selectionMode === selection.BUILDING_1) {
-                    const buildingClone = fbxObject.clone();
-                    buildingClone.position.copy(highlightMesh.position);
-                    let building;
-                    building = new Building(generateMeshCoordinatesThree(highlightMesh),(Math.floor(doorMesh.position.x),Math.floor(doorMesh.position.z)));
-                    addCity(building);
-                    console.log(highlightMesh.position)
-                    console.log(generateMeshCoordinatesThree(highlightMesh));
-                    for (let i = 0; i < 9; i++) {
-                        grid[generateMeshCoordinatesThree(highlightMesh)[i][0] + 30][generateMeshCoordinatesThree(highlightMesh)[i][1] + 30] = true;
-                    }
-                    scene.add(buildingClone);
-                    objects.push(buildingClone);
-                    highlightMesh.material.color.setHex(0x00FF00);
-                } else if (selectionMode === selection.BUILDING_2) {
-                    const building2Clone = fbxObject2.clone();
-                    building2Clone.position.copy(highlightMesh2.position);
-                    building2Clone.position.z += 0.5
-                    let building;
-                    building = new Building(generateMeshCoordinatesFive(highlightMesh2),(Math.floor(doorMesh.position.x),Math.floor(doorMesh.position.z)));
-                    addCity(building);
-                    console.log(generateMeshCoordinatesFive(highlightMesh2))
-                    for (let i = 0; i < 25; i++) {
-                        grid[generateMeshCoordinatesFive(highlightMesh2)[i][0] + 30][generateMeshCoordinatesFive(highlightMesh2)[i][1] + 30] = true;
-                    }
-                    console.log(grid)
-                    scene.add(building2Clone);
-                    objects.push(building2Clone);
-                    highlightMesh2.material.color.setHex(0x00FF00);
-                }
+        if (intersects.length > 0) {
+            const intersect = intersects[0];
+            var mousePosOnGrid = new THREE.Vector2(intersect.point.x,intersect.point.z).round();
+            var isIntersect = selectedAssetsObject.CheckOccupying(mousePosOnGrid,grid);
+            //console.log(isIntersect);
+            if(!isIntersect){
+                //console.log("inşaa");
+                const buildingClone = selectedAssetsObject.fbxObject.clone();
+                buildingClone.name = selectedAssetsObject.assetsId + " " + selectedAssetsObject.buildedId++ + " " + selectedAssetsObject.rotationDeg;
+                //console.log(buildingClone.name);
+                buildingClone.position.set(mousePosOnGrid.x,0,mousePosOnGrid.y);
+                scene.add(buildingClone);
+                selectedAssetsObject.SetOccupying(mousePosOnGrid,grid);
+                //console.log(mousePosOnGrid.clone().add(selectedAssetsObject.doorGridPos));
+                addCity(mousePosOnGrid.clone().add(selectedAssetsObject.doorGridPos), buildingClone.name);
+                console.log(graph);
             }
         }
-        console.log(scene.children.length);
-        console.log(objects);
+    }
+    else if(event.button === 1)
+    {
+        raycaster.setFromCamera(mousePosition, camera);
+        intersects = raycaster.intersectObjects( scene.children.filter((element) => element.type =="Group"));
+        if (intersects.length > 0) {
+            //console.log(intersects[0]);
+            var par = intersects[0].object;
+            while(par.parent.type !== "Scene"){
+                par = par.parent;
+            } 
+            assets[parseInt(par.name.split(" ")[0])].SetFree(new THREE.Vector2(par.position.x,par.position.z),grid,par.name.split(" ")[2]);
+            scene.remove(par);
+            removeCity(par.name);
+            console.log(graph);
+
+        }
+    }   
+    else if(event.button === 2){
+        constructGraph() ;
     }
 });
 window.addEventListener('contextmenu', function (event) {
@@ -281,26 +254,13 @@ window.addEventListener('keydown', function (event) {
             camera.position.x += 1;
             break;
         case 'e':
-            // Rotate highlight mesh to the right (clockwise)
-            direction += 1;
-            fbxObject.rotateY(-Math.PI / 2);
-            fbxObject2.rotateY(Math.PI / 2);
+            selectedAssetsObject.RotateCCW(-Math.PI/2);
             break;
         case 'q':
-            direction += 3;
-            // Rotate highlight mesh to the left (counterclockwise)
-            fbxObject.rotateY(+Math.PI / 2);
-            fbxObject2.rotateY(-Math.PI / 2);
+            selectedAssetsObject.RotateCCW(Math.PI/2);
             break;
     }
 });
-
-
-var deneme = new Building(new THREE.Vector2(1,1),new THREE.Vector2(1,1),null,new THREE.Vector2(2,0));
-//console.log(deneme.occupiedGridPoses);
-scene.add(deneme.highlightMesh);
-//deneme.RotateCCW(Math.PI/2);
-deneme.CheckIntersecting(new THREE.Vector2(0,0),grid);
 
 
 function animate(time) {
@@ -308,85 +268,25 @@ function animate(time) {
     intersects = raycaster.intersectObject(planeMesh);
 
     if (intersects.length > 0) {
+        selectedAssetsObject.highlightMesh.visible = true;
         const intersect = intersects[0];
-        deneme.highlightMesh.position.set(intersect.point.round().x,intersect.point.round().y,intersect.point.round().z);
-        //denemeHighlightMesh.position.set(intersect.point.x,intersect.point.y,intersect.point.z);
+        var mousePosOnGrid = new THREE.Vector2(intersect.point.x,intersect.point.z).round();
+        selectedAssetsObject.highlightMesh.position.set(mousePosOnGrid.x,0,mousePosOnGrid.y);        
 
-        //console.log(intersect.point.round());
-
-        //deneme.CheckIntersecting(grid);
-
-        
-
-        if (deneme.CheckIntersecting(new THREE.Vector2(intersect.point.x,intersect.point.z).round(),grid)) {
-           // deneme.highlightMesh.material.color.setHex(0xFF0000); // Red color for intersection
-            deneme.highlightMeshMaterial.color.set(0xFF0000);
+        if (selectedAssetsObject.CheckOccupying(mousePosOnGrid,grid)) {
+           selectedAssetsObject.highlightMeshMaterial.color.set(0xFF0000);
         } else {
-            //deneme.highlightMesh.material.color.setHex(0x00FF00); // Green color for no intersection
-            deneme.highlightMeshMaterial.color.set(0x00FF00);
+            selectedAssetsObject.highlightMeshMaterial.color.set(0x00FF00);
         }
 
-
-
-       /* let usedHighlight = highlightMesh;
-        let gridSize = 3;
-        if (selectionMode === selection.BUILDING_2) {
-            usedHighlight = highlightMesh2;
-            gridSize = 5; // Adjust gridSize for the second building
-        }
-
-        // Calculate the center of the 3x3 grid based on the mouse position
-        const highlightPos = new THREE.Vector3().copy(intersect.point).floor().addScalar(gridSize / 2 - 1);
-
-        if (selectionMode == selection.BUILDING_1) {
-            usedHighlight.position.set(highlightPos.x, 0, highlightPos.z);
-            if (direction % 4 == 0) {
-                doorMesh.position.set(usedHighlight.position.x, 0, usedHighlight.position.z + 2);
-            } else if (direction % 4 == 1) {
-                doorMesh.position.set(usedHighlight.position.x - 2, 0, usedHighlight.position.z);
-            } else if (direction % 4 == 2) {
-                doorMesh.position.set(usedHighlight.position.x, 0, usedHighlight.position.z - 2);
-            } else if (direction % 4 == 3) {
-                doorMesh.position.set(usedHighlight.position.x + 2, 0, usedHighlight.position.z);
-            }
-        } else if (selectionMode == selection.BUILDING_2) {
-            usedHighlight.position.set(highlightPos.x - 1, 0, highlightPos.z - 1);
-        } else if (selectionMode == selection.DELETE) {
-            deleteMesh.position.set(highlightPos.x, 0, highlightPos.z);
-        }
-        let isIntersection
-
-        if (selectionMode == selection.BUILDING_1) {
-            isIntersection =  isIntersect(grid,generateMeshCoordinatesThree(highlightMesh));
-        }
-        else if (selectionMode == selection.BUILDING_2) {
-            isIntersection =  isIntersect(grid,generateMeshCoordinatesFive(highlightMesh2));
-        }
-        if (isIntersection) {
-            usedHighlight.material.color.setHex(0xFF0000); // Red color for intersection
-        } else {
-            usedHighlight.material.color.setHex(0x00FF00); // Green color for no intersection
-            doorMesh.material.color.setHex(0x00FF00);
-        }*/
-
+    }
+    else{
+        selectedAssetsObject.highlightMesh.visible = false;
     }
 
     orbit.update();
-    if (selectionMode == selection.BUILDING_1) {
-        scene.remove(highlightMesh2);
-        scene.remove(deleteMesh);
-        scene.add(highlightMesh);
-    } else if (selectionMode == selection.BUILDING_2) {
-        scene.remove(highlightMesh);
-        scene.remove(deleteMesh);
-        scene.add(highlightMesh2);
-    } else {
-        scene.remove(highlightMesh);
-        scene.remove(highlightMesh2);
-    }
-    highlightMesh.material.opacity = 1 + Math.sin(time / 120);
-    doorMesh.material.opacity = 1 + Math.sin(time / 120);
-    highlightMesh2.material.opacity = 1 + Math.sin(time / 120);
+    
+    selectedAssetsObject.highlightMesh.material.opacity = 1 + Math.sin(time / 120);
     renderer.render(scene, camera);
 }
 

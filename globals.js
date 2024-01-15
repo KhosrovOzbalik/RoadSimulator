@@ -5,7 +5,7 @@ export const selection = Object.freeze({
     BUILDING_2: "Building 2",
     ROCK: "Rock",
     TREE: "Tree",
-    DELETE: "delete",
+    //DELETE: "delete",
 })
 
 /*Meshler zart zurt globaller buraya*/
