@@ -1,15 +1,23 @@
-import { Vector2 ,Mesh,PlaneGeometry,MeshBasicMaterial,DoubleSide} from "three";
+import { Vector2,Vector3,Mesh,PlaneGeometry,MeshBasicMaterial,DoubleSide} from "three";
+import { degToRad, radToDeg } from "three/src/math/MathUtils";
 //import * as THREE from 'three';
 
+var assetsId = 0;
+
+
 export class AssetsObject {
-    constructor(topLeftGridPos,bottomRightGridPos,fbxObject) {
+    constructor(topLeftGridPos,bottomRightGridPos,fbxObject,selectionMode,scene,assets) {
+        this.selectionMode = selectionMode;
         this.fbxObject = fbxObject;
+        this.assetsId = assetsId++;
+        this.buildedId = 0;
+        this.rotationDeg = 0;
         this.occupiedGridPoses = [];
-        this.centerGridPos = new Vector2(0,0);
         this.highlightMeshMaterial = new MeshBasicMaterial({ color: 0xff0000 ,side: DoubleSide,
             transparent: true});
         this.highlightMesh =generateMesh2(topLeftGridPos.x + bottomRightGridPos.x + 1
             , topLeftGridPos.y + bottomRightGridPos.y + 1,this.highlightMeshMaterial); 
+        this.highlightMesh.visible = false;
         
         this.highlightMesh.rotateX(-Math.PI / 2);
         this.highlightMesh.geometry.translate( (bottomRightGridPos.x-topLeftGridPos.x)/2.0  
@@ -24,20 +32,27 @@ export class AssetsObject {
             }            
         }
         this.occupiedGridPoses.push(new Vector2(0,0));
+        scene.add(this.highlightMesh);
+        assets.push(this);
     }
 
     RotateCCW(radian) {
+        this.rotationDeg = (this.rotationDeg+radToDeg(radian)+360)%360;
+        
         this.occupiedGridPoses.forEach(element => {
-            element.rotateAround(new Vector2(0,0),radian).round();
+            element.rotateAround(new Vector2(0,0),-radian).round();
         });
         this.highlightMesh.rotateZ(radian);
         //FBX OBJESİNİ DE ROTATE ET
+        this.fbxObject.rotateOnWorldAxis(new Vector3(0,1,0),radian);
+        
     }
 
-    CheckIntersecting(mouseVec2,grid){
+    CheckOccupying(mouseVec2,grid){
         var isIntersect = false;
         for (let i = 0; i < this.occupiedGridPoses.length; i++) {
             var temp = mouseVec2.clone().add(this.occupiedGridPoses[i]);
+            //console.log(temp);
             if(temp.y >= grid.length || temp.x >= grid[0].length || temp.y<0 || temp.x<0 || grid[temp.y][temp.x]){
                 isIntersect = true;
                 break; 
@@ -45,27 +60,56 @@ export class AssetsObject {
         }
         return isIntersect;
     }
+
+    SetOccupying(mouseVec2,grid){
+        for (let i = 0; i < this.occupiedGridPoses.length; i++) {
+            var temp = mouseVec2.clone().add(this.occupiedGridPoses[i]);
+            grid[temp.y][temp.x] = true;
+        }
+    }
+
+    SetFree(centerGridPos,grid,rotationDegTemp){
+        var newRad = degToRad(parseInt(rotationDegTemp)-this.rotationDeg);
+        this.occupiedGridPoses.forEach(element => {
+            element.rotateAround(new Vector2(0,0),-newRad).round();
+        });
+        for (let i = 0; i < this.occupiedGridPoses.length; i++) {
+            var temp = centerGridPos.clone().add(this.occupiedGridPoses[i]);
+            
+            grid[temp.y][temp.x] = false;
+        }
+        this.occupiedGridPoses.forEach(element => {
+            element.rotateAround(new Vector2(0,0),newRad).round();
+        });
+    }
 }
 
 export class Building extends AssetsObject {
-    constructor(topLeftGridPos,bottomRightGridPos,fbxObject, doorGridPos) {
-        super(topLeftGridPos,bottomRightGridPos,fbxObject);
+    constructor(topLeftGridPos,bottomRightGridPos,fbxObject, doorGridPos,selectionMode,scene,assets) {
+        super(topLeftGridPos,bottomRightGridPos,fbxObject,selectionMode,scene,assets);
         this.doorGridPos = doorGridPos;
         this.occupiedGridPoses.push(doorGridPos);
         var doorMesh = generateMesh(1,this.highlightMeshMaterial);
         doorMesh.position.set(doorGridPos.x,-doorGridPos.y,0);
         this.highlightMesh.add(doorMesh);
+        this.highlightMesh.visible = false;
     }   
+}
+
+export class CityBuilding{
+    constructor() {
+    
+    }
 }
 
 function generateMesh(size,material) {
     return new Mesh(
-        new PlaneGeometry(size, size), // Change size to represent a 3x3 grid
+        new PlaneGeometry(size, size), 
         material);
 }
 
  function generateMesh2(size1,size2,material) {
     return new Mesh(
-        new PlaneGeometry(size1, size2), // Change size to represent a 3x3 grid
+        new PlaneGeometry(size1, size2), 
         material);
 }
