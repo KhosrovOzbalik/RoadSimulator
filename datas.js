@@ -45,7 +45,7 @@ export function removeCity(buildingId) {
             break;
         }
     }
-    console.log(buildings);
+    //console.log(buildings);
 }
 
 export function constructGraph() {

@@ -203,6 +203,31 @@ fbxLoader.load("Assets/building.fbx", (object) => {
     denemefbxObject2.fbxObject = object.clone();
 });
 
+
+let totoroFBXObject;
+fbxLoader.load("Assets/totoro/totoro.fbx", (object) => {
+    //object.position.set(30,0,30);
+    object.scale.set(0.005, 0.005, 0.005);
+    let light;
+    let cam;
+    object.traverse(function (child) {
+        
+        //console.log(child.type);
+        if(child.type == "PointLight")
+        {
+          light = child;
+        }
+        else if(child.type == "PerspectiveCamera"){
+            cam = child;
+        }
+    })
+    object.remove(light,cam);
+    totoroFBXObject = object.clone();
+    //scene.add(totoroFBXObject);
+});
+
+
+
 const mousePosition = new THREE.Vector2();
 window.addEventListener("mousemove", function (e) {
     //console.log(e.clientX-120);
@@ -448,7 +473,7 @@ const generate = async () => {
             const yol = mst[i];
             let node1 = yol.node1;
             let node2 = yol.node2;
-            console.log(node1);
+            //console.log(node1);
             let building1 = buildings.find(building => building.id === node1);
             let building2 = buildings.find(building => building.id === node2);
             //console.log(building1.door,building2.door);
@@ -510,7 +535,7 @@ function Totoro(){
 }
 
 async function CreateTotoro(b1,b2){
-    //console.log(roads);
+    
     let building1 = buildings.find(building => building.id === b1.name);
     let building2 = buildings.find(building => building.id === b2.name);
 
@@ -534,12 +559,20 @@ async function CreateTotoro(b1,b2){
     var dijkstraResult = dijkstra(gridRoadMap,building1.door,building2.door).path;
     //console.log(dijkstraResult);
 
-    const totoro = yolFbxObject.fbxObject.clone();
+    const totoro = totoroFBXObject.clone();
     totoro.position.set(dijkstraResult[0][1],1,dijkstraResult[0][0]);
+    var tempScale = totoro.scale.clone();
+    //console.log(tempScale);
+    totoro.scale.set(0,0,0);
     scene.add(totoro);
     var oneGridWalkTimeMS = 100;
+    var scalingTimeMS = 100;
+    new TWEEN.Tween(totoro.scale)
+            .to({ x:tempScale.x, y:tempScale.y, z:tempScale.z}, scalingTimeMS)
+            .start();
+    await timer(scalingTimeMS);
 
-
+    //console.log(totoro.scale);
 
     for (let i = 1; i < dijkstraResult.length; i++) {
         new TWEEN.Tween(totoro.position)
@@ -547,5 +580,11 @@ async function CreateTotoro(b1,b2){
             .start();
         await timer(oneGridWalkTimeMS);
     }
+    //console.log("bb");
+    new TWEEN.Tween(totoro.scale)
+            .to({ x:0, y:0, z:0}, scalingTimeMS)
+            .start().onComplete(()=>{scene.remove(totoro);});
+    totoro.scale.set(tempScale);
+    
 
 }
