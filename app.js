@@ -1,10 +1,13 @@
 import * as THREE from "three";
+import TWEEN from '@tweenjs/tween.js'
 import {OrbitControls} from "three/examples/jsm/controls/OrbitControls.js";
 import {FBXLoader} from "three/examples/jsm/loaders/FBXLoader";
+import { TransformControls } from 'three/addons/controls/TransformControls.js';
 
 import {GRID_SIZE, selection} from "./globals";
-import {resetRoads, addRoad, AssetsObject, Building} from "./objects";
-import {addCity, graph, grid, removeCity, constructGraph} from "./datas";
+import {resetRoads, addRoad, AssetsObject, Building,Road} from "./objects";
+import {addCity, graph, grid, removeCity, constructGraph, roads, buildings} from "./datas";
+import { dijkstra } from "./algorithmUtilities";
 
 const renderer = new THREE.WebGLRenderer({canvas: canvas});
 
@@ -100,7 +103,7 @@ planeMesh.rotateX(-Math.PI / 2);
 scene.add(planeMesh);
 
 const gridHelper = new THREE.GridHelper(GRID_SIZE, GRID_SIZE); // Change size to represent a 3x3 grid
-gridHelper.position.set(GRID_SIZE / 2.0 - 0.5, 0, GRID_SIZE / 2.0 - 0.5);
+gridHelper.position.set(GRID_SIZE / 2.0 - 0.5, 0.01, GRID_SIZE / 2.0 - 0.5);
 scene.add(gridHelper);
 
 const light = new THREE.PointLight(0xffffff, 50);
@@ -138,7 +141,7 @@ const fbxLoader = new FBXLoader();
 fbxLoader.load("Assets/evyeni/ev.fbx", (object) => {
     object.scale.set(0.005, 0.01, 0.005);
     object.rotateY(-Math.PI / 2);
-    //console.log(object.name);
+    //console.log(object);
     let light;
     let yol;
     let tas;
@@ -156,10 +159,21 @@ fbxLoader.load("Assets/evyeni/ev.fbx", (object) => {
     denemefbxObject.fbxObject = object.clone();
 });
 
-/*fbxLoader.load('Assets/yolyeni/yeniyol.fbx', (object) => {
+
+var yolFbxObject = new AssetsObject(
+    new THREE.Vector2(0,0),
+    new THREE.Vector2(0,0),
+    null,
+    selection.BUILDING_2,
+    scene,
+    assets
+);
+
+fbxLoader.load('Assets/yolyeni/yeniyol.fbx', (object) => {
     object.scale.set(.005, .005, .005);
     let light;
     object.traverse(function (child) {
+        
         //console.log(child);
         if(child.type == "PointLight")
         {
@@ -167,9 +181,9 @@ fbxLoader.load("Assets/evyeni/ev.fbx", (object) => {
         }
     })
     object.remove(light);
-    denemefbxObject2.fbxObject = object.clone();
+    yolFbxObject.fbxObject = object.clone();
     
-})*/
+})
 
 fbxLoader.load("Assets/building.fbx", (object) => {
     //console.log(object);
@@ -179,9 +193,20 @@ fbxLoader.load("Assets/building.fbx", (object) => {
 
 const mousePosition = new THREE.Vector2();
 window.addEventListener("mousemove", function (e) {
-    mousePosition.x = (e.clientX / window.innerWidth) * 2 - 1;
+    //console.log(e.clientX-120);
+    mousePosition.x = ((e.clientX-120) / window.innerWidth) * 2 - 1;
     mousePosition.y = -(e.clientY / window.innerHeight) * 2 + 1;
+    //mousePosition.x = (e.clientX / canvas.width) * 2 - 1;
+    //mousePosition.y = -(e.clientY / canvas.height) * 2 + 1;
+   // console.log(window.innerWidth, canvas.width);
 });
+
+
+
+const controls = new TransformControls(camera, renderer.domElement);
+//controls.attach(cube);
+scene.add(controls);
+
 
 function FindSelectedAssetsObject() {
     if (selectedAssetsObject != null) {
@@ -200,21 +225,23 @@ function FindSelectedAssetsObject() {
     return selectedAssetsObjectTemp;
 }
 
-export var doorPoses = [];
 
+export var doorPoses = [];
 const raycaster = new THREE.Raycaster();
 let intersects;
 var aa = false;
 window.addEventListener("mousedown", function (event) {
     event.stopImmediatePropagation();
     if (event.button === 0) {
-        console.log("lan");
+        //console.log("lan");
         aa = true;
         raycaster.setFromCamera(mousePosition, camera);
         intersects = raycaster.intersectObject(planeMesh);
+        
 
         if (intersects.length > 0) {
             const intersect = intersects[0];
+            //console.log(intersect.point.round());
             var mousePosOnGrid = new THREE.Vector2(
                 intersect.point.x,
                 intersect.point.z
@@ -245,7 +272,7 @@ window.addEventListener("mousedown", function (event) {
                 doorPoses.push(
                     mousePosOnGrid.clone().add(selectedAssetsObject.doorGridPos)
                 );
-                console.log(buildingClone.name);
+                //console.log(buildingClone.name);
                 addCity(
                     mousePosOnGrid
                         .clone()
@@ -291,7 +318,7 @@ window.addEventListener("contextmenu", function (event) {
 
 window.addEventListener("keydown", function (event) {
     event.stopImmediatePropagation();
-    console.log("tuşa basıldı");
+    //console.log("tuşa basıldı");
     switch (event.key) {
         case "w":
             // Move camera forward
@@ -336,7 +363,7 @@ function animate(time) {
         ).round();
         selectedAssetsObject.highlightMesh.position.set(
             mousePosOnGrid.x,
-            0,
+            0.1,
             mousePosOnGrid.y
         );
 
@@ -350,9 +377,12 @@ function animate(time) {
     }
 
     orbit.update();
+    TWEEN.update();
 
     selectedAssetsObject.highlightMesh.material.opacity =
         1 + Math.sin(time / 120);
+
+
     renderer.render(scene, camera);
 }
 
@@ -364,12 +394,44 @@ window.addEventListener("resize", function () {
     renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-const generate = () => {
+
+
+const timer = ms => new Promise(res => setTimeout(res, ms));
+
+const generate = async () => {
     resetRoads();
 
     var mst = constructGraph();
     if (mst != null) {
-        console.log(mst);
+        //console.log(mst);
+        for (let i = 0; i < mst.length; i++) {
+            const yol = mst[i];
+            let node1 = yol.node1;
+            let node2 = yol.node2;
+            let building1 = buildings.find(building => building.id === node1);
+            let building2 = buildings.find(building => building.id === node2);
+            //console.log(building1.door,building2.door);
+            var dijkstraResult = dijkstra(grid,building1.door,building2.door).path;
+            for (let i = 0; i < dijkstraResult.length; i++) {
+                const element = dijkstraResult[i];
+                const yoll = yolFbxObject.fbxObject.clone();
+                yoll.position.set(element[1],10,element[0]);
+                scene.add(yoll);
+                new TWEEN.Tween(yoll.position)
+                .to( { y:0.1 }, 1000)
+                .start()
+                ;
+                var tempScale = yoll.scale.clone();
+                yoll.scale.set(0,0,0);
+                
+                new TWEEN.Tween(yoll.scale)
+                .to({ x:tempScale.x,y:tempScale.y,z:tempScale.z}, 1000)
+                .start()
+                ;
+                await timer(100);
+            }
+        }
+        
     }
 
     for (let i = 0; i < mst; i++) {

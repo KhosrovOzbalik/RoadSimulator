@@ -27,9 +27,10 @@ for (let i = 0; i < GRID_SIZE; i++) {
 
 export let graph = new Graph(); // tüm şehirleri birbirine bağlayan graph
 
-let buildings = []; // Şehir array'i
+export let buildings = []; // Şehir array'i
 
 export let roads = [];
+
 
 
 export function addCity(doorGridPos,buildingId) {

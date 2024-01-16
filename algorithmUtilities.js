@@ -1,4 +1,5 @@
 import {GRID_SIZE} from "./globals";
+import { doorPoses } from "./app";
 
 function minimumSpanningTree(graph) {
     const visited = {};
@@ -35,7 +36,7 @@ function minimumSpanningTree(graph) {
     return mst;
 }
 
-function dijkstra(grid, node1, node2) {
+function dijkstra(gridMain, node1, node2) {
 
     let start;
     let end;
@@ -46,6 +47,18 @@ function dijkstra(grid, node1, node2) {
     else{
         start = [node1.y,node1.x];
         end = [node2.y,node2.x];
+    }
+
+    var grid = gridMain.map(function(arr) {
+        return arr.slice();
+    });
+
+    //console.log(doorPoses);
+    //console.log(grid);
+    for (let i = 0; i < doorPoses.length; i++) {
+        grid[doorPoses[i].y][doorPoses[i].x] = false;
+        //console.log(gridMain[doorPoses[i].y][doorPoses[i].x])
+        
     }
 
     const rows = grid.length;
