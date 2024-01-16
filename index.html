@@ -34,25 +34,60 @@
             left: 20px;
         }
 
-        #sliderContainer {
-            position: absolute;
-            bottom: 10px;
-            left: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            background-color: rgba(255, 255, 255, 0.8);
-            padding: 10px;
-            border-radius: 5px;
-            z-index: 1;
-        }
-
         button {
             cursor: pointer;
             padding: 8px;
             border: none;
             border-radius: 3px;
             font-size: 14px;
+        }
+
+        #shaders {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        #shaders label {
+            margin: 0;
+        }
+
+        /* Styling for the switch slider */
+        .switch-slider {
+            position: relative;
+            width: 40px;
+            height: 20px;
+            background-color: #ccc;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        /* Styling for the switch circle */
+        .switch-circle {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 20px;
+            height: 20px;
+            background-color: #fff;
+            border-radius: 50%;
+            transition: transform 0.3s ease-in-out;
+        }
+
+        /* Styling for the switch input:checked state */
+        #shadersCheckbox:checked + .switch-slider .switch-circle {
+            transform: translateX(100%);
+        }
+
+        /* Hide the default checkbox */
+        #shadersCheckbox {
+            opacity: 0;
+            position: absolute;
+            width: 0;
+            height: 0;
         }
     </style>
 </head>
@@ -69,38 +104,12 @@
 </div>
 <button id="generate">Generate</button>
 <canvas id="canvas"></canvas>
-
-<!-- <div id="sliderContainer">
-    <label for="lightX">Light X coordinate:</label>
-    <input
-        type="range"
-        id="lightX"
-        name="lightX"
-        min="-40"
-        max="40"
-        value="0"
-    />
-
-    <label for="lightZ">Light Z coordinate:</label>
-    <input
-        type="range"
-        id="lightZ"
-        name="lightZ"
-        min="-40"
-        max="40"
-        value="0"
-    />
-
-    <label for="intensity">Intensity:</label>
-    <input
-        type="range"
-        id="intensity"
-        name="intensity"
-        min="0"
-        max="400"
-        value="200"
-    />
-</div> -->
+<div id="shaders">
+    <input id="shadersCheckbox" type="checkbox" class="switch-input"/>
+    <label for="shadersCheckbox" class="switch-slider">
+        <span class="switch-circle"></span>
+    </label>
+</div>
 <script type="module" src="app.js"></script>
 </body>
 </html>
