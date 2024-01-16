@@ -62,6 +62,14 @@ const camera = new THREE.PerspectiveCamera(
     1000
 );
 
+const loader = new THREE.CubeTextureLoader();
+loader.setPath("Assets/skybox/");
+
+const textureCube = loader.load([
+    '2.jpg', '4.jpg', '1.jpg', '6.jpg', '5.jpg', '3.jpg',
+]);
+scene.background = textureCube;
+
 const orbit = new OrbitControls(camera, renderer.domElement);
 orbit.mouseButtons = {
     LEFT: THREE.MOUSE.RIGHT,
