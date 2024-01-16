@@ -9,7 +9,7 @@ import {resetRoads, addRoad, AssetsObject, Building,Road} from "./objects";
 import {addCity, graph, grid, removeCity, constructGraph, roads, buildings} from "./datas";
 import { dijkstra } from "./algorithmUtilities";
 
-const renderer = new THREE.WebGLRenderer({canvas: canvas});
+const renderer = new THREE.WebGLRenderer({canvas: canvas, antialias:true});
 
 renderer.setSize(window.innerWidth, window.innerHeight);
 
@@ -23,7 +23,7 @@ const selectDeleteBtn = document.getElementById("selectDelete");
 const generateBtn = document.getElementById("generate");
 
 // Flag to indicate the current selection mode
-let selectionMode = selection.BUILDING_1; // Default to yellow cube
+let selectionMode = null; // Default to yellow cube
 
 // Event listeners for UI buttons
 selectYellowBtn.addEventListener("click", function () {
@@ -92,7 +92,7 @@ orbit.update();
 
 const planeMesh = new THREE.Mesh(
     new THREE.PlaneGeometry(GRID_SIZE, GRID_SIZE), // Change size to represent a 3x3 grid
-    new THREE.MeshBasicMaterial({
+    new THREE.MeshPhongMaterial({
         side: THREE.DoubleSide,
         visible: true,
         color: "green",
@@ -106,17 +106,11 @@ const gridHelper = new THREE.GridHelper(GRID_SIZE, GRID_SIZE); // Change size to
 gridHelper.position.set(GRID_SIZE / 2.0 - 0.5, 0.01, GRID_SIZE / 2.0 - 0.5);
 scene.add(gridHelper);
 
-const light = new THREE.PointLight(0xffffff, 50);
-light.position.set(30, 20, 30);
-//scene.add(light);
 
-const ambientLight = new THREE.AmbientLight();
-ambientLight.position.set(30, 20, 30);
-scene.add(ambientLight);
 
 const assets = [];
 
-var denemefbxObject = new AssetsObject(
+var building1AssetsObject = new AssetsObject(
     new THREE.Vector2(1, 1),
     new THREE.Vector2(1, 1),
     null,
@@ -134,7 +128,7 @@ new Building(
     scene,
     assets
 );*/
-var denemefbxObject2 = new Building(
+var building2AssetsObject = new Building(
     new THREE.Vector2(2, 2),
     new THREE.Vector2(2, 2),
     null,
@@ -167,7 +161,7 @@ fbxLoader.load("Assets/evyeni/ev.fbx", (object) => {
         }
     });
     object.remove(light, tas, yol);
-    denemefbxObject.fbxObject = object.clone();
+    building1AssetsObject.fbxObject = object.clone();
 });
 
 
@@ -200,7 +194,7 @@ fbxLoader.load("Assets/building.fbx", (object) => {
     //console.log(object);
 //    object.type = "assets";
     object.scale.set(0.025, 0.03, 0.05);
-    denemefbxObject2.fbxObject = object.clone();
+    building2AssetsObject.fbxObject = object.clone();
 });
 
 
@@ -240,9 +234,38 @@ window.addEventListener("mousemove", function (e) {
 
 
 
+const pointLight = new THREE.PointLight(0xff0000, 500);
+pointLight.position.set(30, 20, 30);
+scene.add(pointLight);
+
+const ambientLight = new THREE.AmbientLight();
+ambientLight.position.set(30, 20, 30);
+scene.add(ambientLight);
+
+const spotLight = new THREE.SpotLight(0xffffff ,10000);
+scene.add(spotLight);
+const spotLightTarget = new THREE.Object3D(); 
+scene.add( spotLightTarget ); 
+spotLight.target = spotLightTarget;
+//spotLight.add(spotLightTarget);
+console.log(spotLight.position);
+console.log(spotLight.target.position);
+const cone = new THREE.Mesh(new THREE.ConeGeometry( 2, 1, 32 ),new THREE.MeshBasicMaterial( {color: 0xffff00,side:THREE.FrontSide}) ); 
+scene.add( cone );
+
+cone.add(spotLightTarget);
+cone.add(spotLight);
+
+
 const controls = new TransformControls(camera, renderer.domElement);
-//controls.attach(cube);
+controls.attach(cone);
+//controls.object = planeMesh;
+//control
 scene.add(controls);
+
+
+
+
 
 
 function FindSelectedAssetsObject() {
@@ -277,7 +300,7 @@ window.addEventListener("mousedown", function (event) {
         intersects = raycaster.intersectObject(planeMesh);
         
 
-        if (intersects.length > 0) {
+        if (intersects.length > 0 && selectionMode != null) {
             const intersect = intersects[0];
             //console.log(intersect.point.round());
             var mousePosOnGrid = new THREE.Vector2(
@@ -408,34 +431,34 @@ function animate(time) {
     start = time;
     raycaster.setFromCamera(mousePosition, camera);
     intersects = raycaster.intersectObject(planeMesh);
-
-    if (intersects.length > 0) {
-        selectedAssetsObject.highlightMesh.visible = true;
-        const intersect = intersects[0];
-        var mousePosOnGrid = new THREE.Vector2(
-            intersect.point.x,
-            intersect.point.z
-        ).round();
-        selectedAssetsObject.highlightMesh.position.set(
-            mousePosOnGrid.x,
-            0.1,
-            mousePosOnGrid.y
-        );
-
-        if (selectedAssetsObject.CheckOccupying(mousePosOnGrid, grid)) {
-            selectedAssetsObject.highlightMeshMaterial.color.set(0xff0000);
+    if(selectionMode != null){
+        if (intersects.length > 0) {
+            selectedAssetsObject.highlightMesh.visible = true;
+            const intersect = intersects[0];
+            var mousePosOnGrid = new THREE.Vector2(
+                intersect.point.x,
+                intersect.point.z
+            ).round();
+            selectedAssetsObject.highlightMesh.position.set(
+                mousePosOnGrid.x,
+                0.1,
+                mousePosOnGrid.y
+            );
+    
+            if (selectedAssetsObject.CheckOccupying(mousePosOnGrid, grid)) {
+                selectedAssetsObject.highlightMeshMaterial.color.set(0xff0000);
+            } else {
+                selectedAssetsObject.highlightMeshMaterial.color.set(0x00ff00);
+            }
         } else {
-            selectedAssetsObject.highlightMeshMaterial.color.set(0x00ff00);
+            selectedAssetsObject.highlightMesh.visible = false;
         }
-    } else {
-        selectedAssetsObject.highlightMesh.visible = false;
+        selectedAssetsObject.highlightMesh.material.opacity = 1 + Math.sin(time / 120);
     }
+    
 
     orbit.update();
     TWEEN.update();
-
-    selectedAssetsObject.highlightMesh.material.opacity =
-        1 + Math.sin(time / 120);
 
 
     renderer.render(scene, camera);
@@ -521,7 +544,7 @@ function Totoro(){
         if(firstBuilding == null){
             firstBuilding = par;
         }
-        else if(secondBuilding == null){
+        else if(secondBuilding == null && par != firstBuilding){
             secondBuilding = par;
         }
 
@@ -560,7 +583,7 @@ async function CreateTotoro(b1,b2){
     //console.log(dijkstraResult);
 
     const totoro = totoroFBXObject.clone();
-    totoro.position.set(dijkstraResult[0][1],1,dijkstraResult[0][0]);
+    totoro.position.set(dijkstraResult[0][1],0,dijkstraResult[0][0]);
     var tempScale = totoro.scale.clone();
     //console.log(tempScale);
     totoro.scale.set(0,0,0);
@@ -576,7 +599,7 @@ async function CreateTotoro(b1,b2){
 
     for (let i = 1; i < dijkstraResult.length; i++) {
         new TWEEN.Tween(totoro.position)
-            .to({ x:dijkstraResult[i][1], y:1, z:dijkstraResult[i][0]}, oneGridWalkTimeMS)
+            .to({ x:dijkstraResult[i][1], y:0, z:dijkstraResult[i][0]}, oneGridWalkTimeMS)
             .start();
         await timer(oneGridWalkTimeMS);
     }
