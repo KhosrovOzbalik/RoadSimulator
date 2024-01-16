@@ -18,7 +18,7 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 
 renderer.setSize(window.innerWidth, window.innerHeight);
-
+console.log(window.innerWidth,window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
 const selectYellowBtn = document.getElementById("selectYellow");
@@ -137,7 +137,7 @@ var building2AssetsObject = new Building(
 var selectedAssetsObject = FindSelectedAssetsObject();
 
 const fbxLoader = new FBXLoader();
-fbxLoader.load("Assets/evyeni/ev1.fbx", (object) => {
+fbxLoader.load("Assets/evyeni/ev.fbx", (object) => {
     object.scale.set(0.005, 0.01, 0.005);
     object.rotateY(-Math.PI / 2);
 
@@ -522,6 +522,7 @@ window.addEventListener("contextmenu", function (event) {
     // event.preventDefault();
 });
 
+var spotlightState = 0;
 var modes = ["translate","rotate"];
 var modeIndex = 0;
 var shaderToggle = false;
@@ -591,6 +592,8 @@ window.addEventListener("keydown", function (event) {
 
             }
             break;
+        case "k":
+            spotLight.visible = !spotLight.visible;
 }
 });
 
