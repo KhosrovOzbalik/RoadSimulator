@@ -82,11 +82,15 @@ export class AssetsObject {
 
             grid[temp.y][temp.x] = false;
         }
-        doorPos = centerGridPos.clone().add(this.doorGridPos);
+        doorPos = null;
+        if(this.doorGridPos != null){
+            doorPos = centerGridPos.clone().add(this.doorGridPos);
+        }
+        
         this.occupiedGridPoses.forEach(element => {
             element.rotateAround(new Vector2(0, 0), newRad).round();
         });
-        console.log(doorPos);
+       // console.log(doorPos);
         return doorPos;
     }
 }
@@ -116,7 +120,10 @@ function generateMesh2(size1, size2, material) {
         material);
 }
 
-class Road {
+export class Road {
+    static animEnum = 0; //0 durma, -1 yok olus, 1 generating
+    static animFirstFrame = true;
+    static yokOlmaAnimTimeMS =1000; 
     constructor(coords, fbxObject) {
         this.fbxObject = fbxObject;
         this.coords = coords;
@@ -127,6 +134,14 @@ class Road {
 export function resetRoads() {
     roads.length = 0;
 }
+/*
+export async function resetRoadsAsync() {
+    Road.animEnum = -1;
+    console.log('start timer');
+    await delay(Road.yokOlmaAnimTimeMS);
+    console.log('after 1 second');
+    roads.length = 0;
+  }*/
 
 export function addRoad(coords, object) {
     roads.push(new Road(coords, object));

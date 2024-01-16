@@ -10,6 +10,9 @@ import {addCity, graph, grid, removeCity, constructGraph, roads, buildings} from
 import { dijkstra } from "./algorithmUtilities";
 
 const renderer = new THREE.WebGLRenderer({canvas: canvas, antialias:true});
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap; 
+
 
 renderer.setSize(window.innerWidth, window.innerHeight);
 
@@ -98,6 +101,9 @@ const planeMesh = new THREE.Mesh(
         color: "green",
     })
 );
+planeMesh.receiveShadow = true;
+planeMesh.name = "PlaneMesh";
+
 planeMesh.position.set(GRID_SIZE / 2.0 - 0.5, 0, GRID_SIZE / 2.0 - 0.5,);
 planeMesh.rotateX(-Math.PI / 2);
 scene.add(planeMesh);
@@ -159,8 +165,14 @@ fbxLoader.load("Assets/evyeni/ev.fbx", (object) => {
         } else if (child.name == "taslar") {
             tas = child;
         }
+        if(child.isMesh){
+            child.castShadow = true;
+            child.receiveShadow = true;
+        }
     });
     object.remove(light, tas, yol);
+    object.castShadow = true;
+    object.receiveShadow = true;
     building1AssetsObject.fbxObject = object.clone();
 });
 
@@ -184,8 +196,14 @@ fbxLoader.load('Assets/yolyeni/yeniyol.fbx', (object) => {
         {
           light = child;
         }
+        if(child.isMesh){
+            child.castShadow = true;
+            child.receiveShadow = true;
+        }
     })
     object.remove(light);
+    object.receiveShadow = true;
+    object.castShadow = true;
     yolFbxObject.fbxObject = object.clone();
     
 })
@@ -194,6 +212,14 @@ fbxLoader.load("Assets/building.fbx", (object) => {
     //console.log(object);
 //    object.type = "assets";
     object.scale.set(0.025, 0.03, 0.05);
+    object.traverse(function (child) {
+        if(child.isMesh){
+            child.castShadow = true;
+            child.receiveShadow = true;
+        }
+    })
+    object.receiveShadow = true;
+    object.castShadow = true;
     building2AssetsObject.fbxObject = object.clone();
 });
 
@@ -214,8 +240,14 @@ fbxLoader.load("Assets/totoro/totoro.fbx", (object) => {
         else if(child.type == "PerspectiveCamera"){
             cam = child;
         }
+        if(child.isMesh){
+            child.castShadow = true;
+            child.receiveShadow = true;
+        }
     })
     object.remove(light,cam);
+    object.castShadow = true;
+    object.receiveShadow = true;
     totoroFBXObject = object.clone();
     //scene.add(totoroFBXObject);
 });
@@ -233,32 +265,37 @@ window.addEventListener("mousemove", function (e) {
 });
 
 
-
+/*
 const pointLight = new THREE.PointLight(0xff0000, 500);
 pointLight.position.set(30, 20, 30);
 scene.add(pointLight);
 
 const ambientLight = new THREE.AmbientLight();
 ambientLight.position.set(30, 20, 30);
-scene.add(ambientLight);
+scene.add(ambientLight);*/
 
-const spotLight = new THREE.SpotLight(0xffffff ,10000);
+const spotLight = new THREE.SpotLight(0xffffff ,1000);
+spotLight.castShadow = true;
+spotLight.shadow.camera.near = 10;
+spotLight.shadow.camera.far = 100;
+spotLight.shadow.camera.left = -50;
+spotLight.shadow.camera.right = 50;
+spotLight.shadow.camera.top = 50;
+spotLight.shadow.camera.bottom = -50;
+spotLight.name = "SpotLight";
 scene.add(spotLight);
 const spotLightTarget = new THREE.Object3D(); 
 scene.add( spotLightTarget ); 
 spotLight.target = spotLightTarget;
-//spotLight.add(spotLightTarget);
-console.log(spotLight.position);
-console.log(spotLight.target.position);
-const cone = new THREE.Mesh(new THREE.ConeGeometry( 2, 1, 32 ),new THREE.MeshBasicMaterial( {color: 0xffff00,side:THREE.FrontSide}) ); 
+const cone = new THREE.Mesh(new THREE.ConeGeometry( 6/Math.sqrt(3), 2, 32 ),new THREE.MeshBasicMaterial( {color: 0xffff00,side:THREE.FrontSide}) ); 
 scene.add( cone );
-
 cone.add(spotLightTarget);
 cone.add(spotLight);
+cone.name = "Controlable SpotLight";
 
 
 const controls = new TransformControls(camera, renderer.domElement);
-controls.attach(cone);
+//controls.attach(cone);
 //controls.object = planeMesh;
 //control
 scene.add(controls);
@@ -297,57 +334,76 @@ window.addEventListener("mousedown", function (event) {
         //console.log("lan");
         aa = true;
         raycaster.setFromCamera(mousePosition, camera);
-        intersects = raycaster.intersectObject(planeMesh);
+        if(controls.dragging){
+            return;
+        }
+        intersects = raycaster.intersectObjects(scene.children.filter((element) => element.name == "PlaneMesh" ||element.name.split(" ")[0] == "Controlable" ));
         
 
-        if (intersects.length > 0 && selectionMode != null) {
-            const intersect = intersects[0];
-            //console.log(intersect.point.round());
-            var mousePosOnGrid = new THREE.Vector2(
-                intersect.point.x,
-                intersect.point.z
-            ).round();
-            var isIntersect = selectedAssetsObject.CheckOccupying(
-                mousePosOnGrid,
-                grid
-            );
-            //console.log(isIntersect);
-            if (!isIntersect) {
-                //console.log("inşaa");
-                const buildingClone = selectedAssetsObject.fbxObject.clone();
-                buildingClone.name ="Deletable"+selectedAssetsObject.constructor.name+" "+
-                    selectedAssetsObject.assetsId +
-                    " " +
-                    selectedAssetsObject.buildedId++ +
-                    " " +
-                    selectedAssetsObject.rotationDeg;
-                //console.log(buildingClone.name);
-                buildingClone.position.set(
-                    mousePosOnGrid.x,
-                    0,
-                    mousePosOnGrid.y
-                );
-                scene.add(buildingClone);
-                selectedAssetsObject.SetOccupying(mousePosOnGrid, grid);
-                //console.log(mousePosOnGrid.clone().add(selectedAssetsObject.doorGridPos));
-                
-                //console.log(buildingClone.name);
-                //console.log(selectedAssetsObject.constructor.name);
-                if(selectedAssetsObject.constructor.name == "Building"){
-                    doorPoses.push(
-                        mousePosOnGrid.clone().add(selectedAssetsObject.doorGridPos)
-                    );
-                    addCity(
-                        mousePosOnGrid
-                            .clone()
-                            .add(selectedAssetsObject.doorGridPos),
-                        buildingClone.name
-                    );
-                }
-                
-                canTotoroSpawn = false;
-                //console.log(graph);
+        if (intersects.length > 0 ) {
+            var par = intersects[0].object;
+            while (par.parent.type !== "Scene") {
+                par = par.parent;
             }
+            if(par.name == "PlaneMesh" && selectionMode != null){
+                var mousePosOnGrid = new THREE.Vector2(
+                    intersects[0].point.x,
+                    intersects[0].point.z
+                ).round();
+                var isIntersect = selectedAssetsObject.CheckOccupying(
+                    mousePosOnGrid,
+                    grid
+                );
+                //console.log(isIntersect);
+                if (!isIntersect) {
+                    //console.log("inşaa");
+                    const buildingClone = selectedAssetsObject.fbxObject.clone();
+                    buildingClone.name ="Deletable"+selectedAssetsObject.constructor.name+" "+
+                        selectedAssetsObject.assetsId +
+                        " " +
+                        selectedAssetsObject.buildedId++ +
+                        " " +
+                        selectedAssetsObject.rotationDeg;
+                    //console.log(buildingClone.name);
+                    buildingClone.position.set(
+                        mousePosOnGrid.x,
+                        0,
+                        mousePosOnGrid.y
+                    );
+                    scene.add(buildingClone);
+                    selectedAssetsObject.SetOccupying(mousePosOnGrid, grid);
+                    //console.log(mousePosOnGrid.clone().add(selectedAssetsObject.doorGridPos));
+                    
+                    //console.log(buildingClone.name);
+                    //console.log(selectedAssetsObject.constructor.name);
+                    if(selectedAssetsObject.constructor.name == "Building"){
+                        doorPoses.push(
+                            mousePosOnGrid.clone().add(selectedAssetsObject.doorGridPos)
+                        );
+                        addCity(
+                            mousePosOnGrid
+                                .clone()
+                                .add(selectedAssetsObject.doorGridPos),
+                            buildingClone.name
+                        );
+                    }
+                    
+                    canTotoroSpawn = false;
+                    //console.log(graph);
+                    controls.detach(controls.object);
+                }
+            }
+            else if(par.name.split(" ")[0] == "Controlable" ){
+                //console.log("contrll");
+                controls.attach(par);
+                selectionMode = null;
+            }
+            else{
+                controls.detach(controls.object);
+            }
+        }
+        else{
+            controls.detach(controls.object);
         }
     } else if (event.button === 1) {
         raycaster.setFromCamera(mousePosition, camera);
@@ -390,6 +446,9 @@ window.addEventListener("contextmenu", function (event) {
     // event.preventDefault();
 });
 
+var modes = ["translate","rotate"];
+var modeIndex = 0;
+
 window.addEventListener("keydown", function (event) {
     event.stopImmediatePropagation();
     //console.log("tuşa basıldı");
@@ -421,6 +480,25 @@ window.addEventListener("keydown", function (event) {
                 Totoro();
             }            
             break;
+        case "x":
+            if(controls.object != null &&controls.object.name == "Controlable SpotLight" && controls.object.getObjectByName("SpotLight") != null){
+                console.log("aaa");
+                controls.object.getObjectByName("SpotLight").intensity+=100;
+
+            }
+            break;
+        case "c":
+            if(controls.object != null &&controls.object.name == "Controlable SpotLight" && controls.object.getObjectByName("SpotLight") != null){
+                var spot = controls.object.getObjectByName("SpotLight");
+                spot.intensity-=100;
+                if(spot.intensity<0){
+                    spot.intensity = 0;
+                }
+            }            
+            break;
+        case "r":
+            controls.mode = modes[(modeIndex++)%modes.length];
+            break;
     }
 });
 
@@ -430,37 +508,35 @@ function animate(time) {
     //console.log(1000/(time-start));
     start = time;
     raycaster.setFromCamera(mousePosition, camera);
-    intersects = raycaster.intersectObject(planeMesh);
-    if(selectionMode != null){
-        if (intersects.length > 0) {
-            selectedAssetsObject.highlightMesh.visible = true;
-            const intersect = intersects[0];
-            var mousePosOnGrid = new THREE.Vector2(
-                intersect.point.x,
-                intersect.point.z
-            ).round();
-            selectedAssetsObject.highlightMesh.position.set(
-                mousePosOnGrid.x,
-                0.1,
-                mousePosOnGrid.y
-            );
+    intersects = raycaster.intersectObjects( scene.children.filter(
+                (element) => element.name == "PlaneMesh" ));
+
     
-            if (selectedAssetsObject.CheckOccupying(mousePosOnGrid, grid)) {
-                selectedAssetsObject.highlightMeshMaterial.color.set(0xff0000);
-            } else {
-                selectedAssetsObject.highlightMeshMaterial.color.set(0x00ff00);
-            }
+    if(intersects.length > 0 && selectionMode != null){       
+        selectedAssetsObject.highlightMesh.visible = true;
+        const intersect = intersects[0];
+        var mousePosOnGrid = new THREE.Vector2(
+            intersect.point.x,
+            intersect.point.z
+        ).round();
+        selectedAssetsObject.highlightMesh.position.set(
+            mousePosOnGrid.x,
+            0.1,
+            mousePosOnGrid.y
+        );
+
+        if (selectedAssetsObject.CheckOccupying(mousePosOnGrid, grid)) {
+            selectedAssetsObject.highlightMeshMaterial.color.set(0xff0000);
         } else {
-            selectedAssetsObject.highlightMesh.visible = false;
+            selectedAssetsObject.highlightMeshMaterial.color.set(0x00ff00);
         }
-        selectedAssetsObject.highlightMesh.material.opacity = 1 + Math.sin(time / 120);
     }
-    
+    else if(selectedAssetsObject != null){
+        selectedAssetsObject.highlightMesh.visible = false;
+    }
 
     orbit.update();
     TWEEN.update();
-
-
     renderer.render(scene, camera);
 }
 
