@@ -1,93 +1,109 @@
 <!doctype html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Object Placement UI</title>
-        <style>
-            body {
-                margin: 0;
-                overflow: hidden;
-            }
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Object Placement UI</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            height: 100vh;
+        }
 
-            #uiContainer {
-                position: absolute;
-                top: 10px;
-                left: 10px;
-                display: flex;
-                flex-direction: column;
-                gap: 10px;
-                background-color: rgba(255, 255, 255, 0.8);
-                padding: 10px;
-                border-radius: 5px;
-                z-index: 1;
-            }
+        canvas {
+            flex: 1;
+            background-color: blue;
+            width: 100%;
+            height: 100%;
+        }
 
-            #sliderContainer {
-                position: absolute;
-                bottom: 10px;
-                left: 10px;
-                display: flex;
-                flex-direction: column;
-                gap: 10px;
-                background-color: rgba(255, 255, 255, 0.8);
-                padding: 10px;
-                border-radius: 5px;
-                z-index: 1;
-            }
+        #uiContainer {
+            width: 200px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background-color: #ccc;
+            padding: 20px;
+        }
 
-            button {
-                cursor: pointer;
-                padding: 8px;
-                border: none;
-                border-radius: 3px;
-                font-size: 14px;
-            }
-        </style>
-    </head>
-    <body>
-        <div id="uiContainer">
-            <button id="selectYellow" style="width: 80px; height: 90px">
-                <img src="Assets/building1.jpg" />
-            </button>
-            <button id="selectWhite" style="width: 80px; height: 90px">
-                <img src="Assets/building2.jpg" />
-            </button>
-            <button id="selectDelete" style="width: 40px; height: 40px">
-                <img src="Assets/delete.png" />
-            </button>
-        </div>
-        <div id="sliderContainer">
-            <label for="lightX">Light X coordinate:</label>
-            <input
-                type="range"
-                id="lightX"
-                name="lightX"
-                min="-40"
-                max="40"
-                value="0"
-            />
+        #generate {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+        }
 
-            <label for="lightZ">Light Z coordinate:</label>
-            <input
-                type="range"
-                id="lightZ"
-                name="lightZ"
-                min="-40"
-                max="40"
-                value="0"
-            />
+        #sliderContainer {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 1;
+        }
 
-            <label for="intensity">Intensity:</label>
-            <input
-                type="range"
-                id="intensity"
-                name="intensity"
-                min="0"
-                max="400"
-                value="200"
-            />
-        </div>
-        <script type="module" src="app.js"></script>
-    </body>
+        button {
+            cursor: pointer;
+            padding: 8px;
+            border: none;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+<div id="uiContainer">
+    <button id="selectYellow" style="width: 80px; height: 90px">
+        <img src="Assets/building1.jpg"/>
+    </button>
+    <button id="selectWhite" style="width: 80px; height: 90px">
+        <img src="Assets/building2.jpg"/>
+    </button>
+    <button id="selectRock">Rock</button>
+    <button id="selectTree">Tree</button>
+    <button id="selectDelete" style="width: 40px; height: 40px">
+        <img src="Assets/delete.png"/>
+    </button>
+</div>
+<button id="generate">Generate</button>
+<canvas id="canvas"></canvas>
+
+<!-- <div id="sliderContainer">
+    <label for="lightX">Light X coordinate:</label>
+    <input
+        type="range"
+        id="lightX"
+        name="lightX"
+        min="-40"
+        max="40"
+        value="0"
+    />
+
+    <label for="lightZ">Light Z coordinate:</label>
+    <input
+        type="range"
+        id="lightZ"
+        name="lightZ"
+        min="-40"
+        max="40"
+        value="0"
+    />
+
+    <label for="intensity">Intensity:</label>
+    <input
+        type="range"
+        id="intensity"
+        name="intensity"
+        min="0"
+        max="400"
+        value="200"
+    />
+</div> -->
+<script type="module" src="app.js"></script>
+</body>
 </html>
