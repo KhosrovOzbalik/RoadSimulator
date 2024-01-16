@@ -2,20 +2,21 @@ import * as THREE from "three";
 import TWEEN from '@tweenjs/tween.js'
 import {OrbitControls} from "three/examples/jsm/controls/OrbitControls.js";
 import {FBXLoader} from "three/examples/jsm/loaders/FBXLoader";
-import {TransformControls} from 'three/addons/controls/TransformControls.js';
+import { TransformControls } from 'three/addons/controls/TransformControls.js';
 
 import {GRID_SIZE, selection} from "./globals";
-import {resetRoads, addRoad, AssetsObject, Building, Road} from "./objects";
+import {resetRoads, addRoad, AssetsObject, Building,Road} from "./objects";
 import {addCity, graph, grid, removeCity, constructGraph, roads, buildings} from "./datas";
-import {dijkstra} from "./algorithmUtilities";
-import {toonVertexShader} from "./Shaders/toonVertexShader";
-import {toonFragmentShader} from "./Shaders/toonFragmentShader";
+import { dijkstra } from "./algorithmUtilities";
+import { toonVertexShader ,havaliVertexShader} from "./Shaders/toonVertexShader";
+import { toonFragmentShader ,havaliFragmentShader} from "./Shaders/toonFragmentShader";
+import { degToRad } from "three/src/math/MathUtils";
 
-const renderer = new THREE.WebGLRenderer({canvas: canvas, antialias: true});
+const renderer = new THREE.WebGLRenderer({canvas: canvas, antialias:true});
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap; 
 
-console.log(window.innerWidth, window.innerHeight);
+
 renderer.setSize(window.innerWidth, window.innerHeight);
 
 document.body.appendChild(renderer.domElement);
@@ -65,37 +66,6 @@ const camera = new THREE.PerspectiveCamera(
     1000
 );
 
-const spotLight = new THREE.SpotLight(0xffffff, 1000);
-spotLight.castShadow = true;
-spotLight.shadow.camera.near = 10;
-spotLight.shadow.camera.far = 100;
-spotLight.shadow.camera.left = -50;
-spotLight.shadow.camera.right = 50;
-spotLight.shadow.camera.top = 50;
-spotLight.shadow.camera.bottom = -50;
-spotLight.name = "SpotLight";
-scene.add(spotLight);
-const spotLightTarget = new THREE.Object3D();
-scene.add(spotLightTarget);
-spotLight.target = spotLightTarget;
-const cone = new THREE.Mesh(new THREE.ConeGeometry(6 / Math.sqrt(3), 2, 32), new THREE.MeshBasicMaterial({
-    color: 0xffff00,
-    side: THREE.FrontSide
-}));
-scene.add(cone);
-cone.add(spotLightTarget);
-cone.add(spotLight);
-cone.position.set(30, 20, 30);
-cone.name = "Controlable SpotLight";
-
-
-const controls = new TransformControls(camera, renderer.domElement);
-//controls.attach(cone);
-//controls.object = planeMesh;
-//control
-scene.add(controls);
-
-
 const loader = new THREE.CubeTextureLoader();
 loader.setPath("Assets/skybox/");
 
@@ -121,13 +91,6 @@ camera.position.set(30, 50, 60);
 
 orbit.update();
 
-const shaderMaterial = new THREE.ShaderMaterial({
-    lights: true,
-    uniforms: {},
-    vertexShader: toonVertexShader,
-    fragmentShader: toonFragmentShader,
-});
-
 const planeMesh = new THREE.Mesh(
     new THREE.PlaneGeometry(GRID_SIZE, GRID_SIZE), // Change size to represent a 3x3 grid
     new THREE.MeshPhongMaterial({
@@ -147,19 +110,20 @@ const gridHelper = new THREE.GridHelper(GRID_SIZE, GRID_SIZE); // Change size to
 gridHelper.position.set(GRID_SIZE / 2.0 - 0.5, 0.01, GRID_SIZE / 2.0 - 0.5);
 scene.add(gridHelper);
 
+const mousePosition = new THREE.Vector2();
 
 const assets = [];
 
-var building1AssetsObject =
-    new Building(
-        new THREE.Vector2(1, 1),
-        new THREE.Vector2(1, 1),
-        null,
-        new THREE.Vector2(0, 2),
-        selection.BUILDING_1,
-        scene,
-        assets
-    );
+var building1AssetsObject = 
+new Building(
+    new THREE.Vector2(1, 1),
+    new THREE.Vector2(1, 1),
+    null,
+    new THREE.Vector2(0, 2),
+    selection.BUILDING_1,
+    scene,
+    assets
+);
 var building2AssetsObject = new Building(
     new THREE.Vector2(2, 2),
     new THREE.Vector2(2, 2),
@@ -173,7 +137,7 @@ var building2AssetsObject = new Building(
 var selectedAssetsObject = FindSelectedAssetsObject();
 
 const fbxLoader = new FBXLoader();
-fbxLoader.load("Assets/evyeni/ev.fbx", (object) => {
+fbxLoader.load("Assets/evyeni/ev1.fbx", (object) => {
     object.scale.set(0.005, 0.01, 0.005);
     object.rotateY(-Math.PI / 2);
 
@@ -189,22 +153,52 @@ fbxLoader.load("Assets/evyeni/ev.fbx", (object) => {
         } else if (child.name == "taslar") {
             tas = child;
         }
-        if (child.isMesh) {
+        if(child.isMesh){
             child.castShadow = true;
             child.receiveShadow = true;
-            child.material = shaderMaterial;
+            
         }
     });
     object.remove(light, tas, yol);
     object.castShadow = true;
     object.receiveShadow = true;
     building1AssetsObject.fbxObject = object.clone();
+    //building1AssetsObject.fbxObject.material = toonMat;
+    //console.log(building1AssetsObject.fbxObject );
 });
 
 
+
+var uniformsA = {
+    u_lightPower:{type : "f", value :1000.0},
+    u_limit:{type : "f", value :Math.cos(degToRad(60.0))},
+    u_lightDirection:{type : "v3", value :new THREE.Vector3()},
+    u_lightWorldPosition:{type : "v3", value :new THREE.Vector3()},
+    u_viewWorldPosition:{type : "v3", value :new THREE.Vector3()},
+};
+const toonMat = new THREE.ShaderMaterial( {
+    uniforms: uniformsA,
+	vertexShader: toonVertexShader,
+	fragmentShader: toonFragmentShader
+} );
+
+
+var uniformsB = {
+    u_time:{type : "f", value :0.0}
+};
+const havaliMat = new THREE.ShaderMaterial( {
+    uniforms: uniformsB,
+	vertexShader: havaliVertexShader,
+	fragmentShader: havaliFragmentShader
+} );
+
+
+
+
+
 var yolFbxObject = new AssetsObject(
-    new THREE.Vector2(0, 0),
-    new THREE.Vector2(0, 0),
+    new THREE.Vector2(0,0),
+    new THREE.Vector2(0,0),
     null,
     null,
     scene,
@@ -215,12 +209,13 @@ fbxLoader.load('Assets/yolyeni/yeniyol.fbx', (object) => {
     object.scale.set(.005, .005, .005);
     let light;
     object.traverse(function (child) {
-
+        
         //console.log(child);
-        if (child.type == "PointLight") {
-            light = child;
+        if(child.type == "PointLight")
+        {
+          light = child;
         }
-        if (child.isMesh) {
+        if(child.isMesh){
             child.castShadow = true;
             child.receiveShadow = true;
         }
@@ -229,15 +224,19 @@ fbxLoader.load('Assets/yolyeni/yeniyol.fbx', (object) => {
     object.receiveShadow = true;
     object.castShadow = true;
     yolFbxObject.fbxObject = object.clone();
-
+    
 })
 
+
+
+
+
+
 fbxLoader.load("Assets/building1/building.fbx", (object) => {
-    //console.log(object);
-//    object.type = "assets";
+    
     object.scale.set(0.025, 0.03, 0.05);
     object.traverse(function (child) {
-        if (child.isMesh) {
+        if(child.isMesh){
             child.castShadow = true;
             child.receiveShadow = true;
         }
@@ -255,19 +254,21 @@ fbxLoader.load("Assets/totoro/totoro.fbx", (object) => {
     let light;
     let cam;
     object.traverse(function (child) {
-
+        
         //console.log(child.type);
-        if (child.type == "PointLight") {
-            light = child;
-        } else if (child.type == "PerspectiveCamera") {
+        if(child.type == "PointLight")
+        {
+          light = child;
+        }
+        else if(child.type == "PerspectiveCamera"){
             cam = child;
         }
-        if (child.isMesh) {
+        if(child.isMesh){
             child.castShadow = true;
             child.receiveShadow = true;
         }
     })
-    object.remove(light, cam);
+    object.remove(light,cam);
     object.castShadow = true;
     object.receiveShadow = true;
     totoroFBXObject = object.clone();
@@ -275,41 +276,67 @@ fbxLoader.load("Assets/totoro/totoro.fbx", (object) => {
 });
 
 
+
+
+
+
 var dagFbxObject = new AssetsObject(
-    new THREE.Vector2(2, 1),
-    new THREE.Vector2(2, 2),
+    new THREE.Vector2(2,1),
+    new THREE.Vector2(2,2),
     null,
     selection.ROCK,
     scene,
     assets
 );
 
+
+const havaliMat2 = new THREE.ShaderMaterial( {
+    uniforms: {u_time:{type : "f", value :uniformsB.u_time.value},
+            texture1:{type : "t", value: new THREE.TextureLoader().load('Assets/dag/Mountain.png')}},
+    vertexShader: havaliVertexShader,
+    fragmentShader: havaliFragmentShader
+} );
+
 fbxLoader.load('Assets/dag/dag.fbx', (object) => {
 
     //console.log(object);
     object.traverse(function (child) {
-        if (child.isMesh) {
+        if(child.isMesh){
             child.castShadow = true;
             child.receiveShadow = true;
         }
     })
-    object.rotateX(-Math.PI / 2);
+    object.rotateX(-Math.PI/2);
     object.scale.set(.0008, .0006, .0008);
     object.receiveShadow = true;
     object.castShadow = true;
     dagFbxObject.fbxObject = object.clone();
-
+    
 })
 
 
-const mousePosition = new THREE.Vector2();
+
+
+
+
+
+
+
+
+
+
+
+
 window.addEventListener("mousemove", function (e) {
     //console.log(e.clientX-120);
-    mousePosition.x = ((e.clientX - 120) / window.innerWidth) * 2 - 1;
+    mousePosition.x = ((e.clientX-120) / window.innerWidth) * 2 - 1;
     mousePosition.y = -(e.clientY / window.innerHeight) * 2 + 1;
+    
+   
+
     //mousePosition.x = (e.clientX / canvas.width) * 2 - 1;
     //mousePosition.y = -(e.clientY / canvas.height) * 2 + 1;
-    // console.log(window.innerWidth, canvas.width);
+   // console.log(window.innerWidth, canvas.width);
 });
 
 
@@ -321,6 +348,37 @@ scene.add(pointLight);
 const ambientLight = new THREE.AmbientLight();
 ambientLight.position.set(30, 20, 30);
 scene.add(ambientLight);*/
+
+const spotLight = new THREE.SpotLight(0xffffff ,1000);
+spotLight.castShadow = true;
+spotLight.shadow.camera.near = 10;
+spotLight.shadow.camera.far = 100;
+spotLight.shadow.camera.left = -50;
+spotLight.shadow.camera.right = 50;
+spotLight.shadow.camera.top = 50;
+spotLight.shadow.camera.bottom = -50;
+spotLight.name = "SpotLight";
+scene.add(spotLight);
+const spotLightTarget = new THREE.Object3D(); 
+scene.add( spotLightTarget ); 
+spotLight.target = spotLightTarget;
+const cone = new THREE.Mesh(new THREE.ConeGeometry( 6/Math.sqrt(3), 2, 32 ),new THREE.MeshBasicMaterial( {color: 0xffff00,side:THREE.FrontSide}) ); 
+scene.add( cone );
+cone.add(spotLightTarget);
+cone.add(spotLight);
+cone.position.set(30,20,30);
+cone.name = "Controlable SpotLight";
+
+
+const controls = new TransformControls(camera, renderer.domElement);
+//controls.attach(cone);
+//controls.object = planeMesh;
+//control
+scene.add(controls);
+
+
+
+
 
 
 function FindSelectedAssetsObject() {
@@ -352,18 +410,18 @@ window.addEventListener("mousedown", function (event) {
         //console.log("lan");
         aa = true;
         raycaster.setFromCamera(mousePosition, camera);
-        if (controls.dragging) {
+        if(controls.dragging){
             return;
         }
-        intersects = raycaster.intersectObjects(scene.children.filter((element) => element.name == "PlaneMesh" || element.name.split(" ")[0] == "Controlable"));
+        intersects = raycaster.intersectObjects(scene.children.filter((element) => element.name == "PlaneMesh" ||element.name.split(" ")[0] == "Controlable" ));
+        
 
-
-        if (intersects.length > 0) {
+        if (intersects.length > 0 ) {
             var par = intersects[0].object;
             while (par.parent.type !== "Scene") {
                 par = par.parent;
             }
-            if (par.name == "PlaneMesh" && selectionMode != null) {
+            if(par.name == "PlaneMesh" && selectionMode != null){
                 var mousePosOnGrid = new THREE.Vector2(
                     intersects[0].point.x,
                     intersects[0].point.z
@@ -376,7 +434,7 @@ window.addEventListener("mousedown", function (event) {
                 if (!isIntersect) {
                     //console.log("inşaa");
                     const buildingClone = selectedAssetsObject.fbxObject.clone();
-                    buildingClone.name = "Deletable" + selectedAssetsObject.constructor.name + " " +
+                    buildingClone.name ="Deletable"+selectedAssetsObject.constructor.name+" "+
                         selectedAssetsObject.assetsId +
                         " " +
                         selectedAssetsObject.buildedId++ +
@@ -391,10 +449,10 @@ window.addEventListener("mousedown", function (event) {
                     scene.add(buildingClone);
                     selectedAssetsObject.SetOccupying(mousePosOnGrid, grid);
                     //console.log(mousePosOnGrid.clone().add(selectedAssetsObject.doorGridPos));
-
+                    
                     //console.log(buildingClone.name);
                     //console.log(selectedAssetsObject.constructor.name);
-                    if (selectedAssetsObject.constructor.name == "Building") {
+                    if(selectedAssetsObject.constructor.name == "Building"){
                         doorPoses.push(
                             mousePosOnGrid.clone().add(selectedAssetsObject.doorGridPos)
                         );
@@ -405,25 +463,29 @@ window.addEventListener("mousedown", function (event) {
                             buildingClone.name
                         );
                     }
-
+                    
                     canTotoroSpawn = false;
                     //console.log(graph);
                     controls.detach(controls.object);
                 }
-            } else if (par.name.split(" ")[0] == "Controlable") {
+            }
+            else if(par.name.split(" ")[0] == "Controlable" ){
                 //console.log("contrll");
                 controls.attach(par);
                 selectionMode = null;
-            } else {
+            }
+            else{
                 controls.detach(controls.object);
             }
-        } else {
+        }
+        else{
             controls.detach(controls.object);
         }
     } else if (event.button === 1) {
         raycaster.setFromCamera(mousePosition, camera);
-        intersects = raycaster.intersectObjects(scene.children.filter((element) => element.name.split(" ")[0] == "DeletableAssetsObject" || element.name.split(" ")[0] == "DeletableBuilding"));
-
+        intersects = raycaster.intersectObjects(scene.children.
+            filter((element) => element.name.split(" ")[0] == "DeletableAssetsObject" ||element.name.split(" ")[0] == "DeletableBuilding" ));
+       
         if (intersects.length > 0) {
             //console.log(intersects[0]);
             var par = intersects[0].object;
@@ -431,7 +493,7 @@ window.addEventListener("mousedown", function (event) {
                 par = par.parent;
             }
             //console.log(doorPoses);
-
+            
             var doorPosV2 = assets[parseInt(par.name.split(" ")[1])].SetFree(
                 new THREE.Vector2(par.position.x, par.position.z),
                 grid,
@@ -439,18 +501,18 @@ window.addEventListener("mousedown", function (event) {
                 1
             );
 
-            if (par.name.split(" ")[0] == "DeletableBuilding") {
-
+            if(par.name.split(" ")[0] == "DeletableBuilding"){
+                
                 doorPoses = doorPoses.filter((element) => {
                     return element.x != doorPosV2.x || element.y != doorPosV2.y;
                 });
                 removeCity(par.name);
             }
-
+            
 
             scene.remove(par);
             canTotoroSpawn = false;
-
+            
             //console.log(graph);
         }
     } else if (event.button === 2) {
@@ -460,9 +522,9 @@ window.addEventListener("contextmenu", function (event) {
     // event.preventDefault();
 });
 
-var modes = ["translate", "rotate"];
+var modes = ["translate","rotate"];
 var modeIndex = 0;
-
+var shaderToggle = false;
 window.addEventListener("keydown", function (event) {
     event.stopImmediatePropagation();
     //console.log("tuşa basıldı");
@@ -490,43 +552,78 @@ window.addEventListener("keydown", function (event) {
             selectedAssetsObject.RotateCCW(Math.PI / 2);
             break;
         case "z":
-            if (canTotoroSpawn) {
+            if(canTotoroSpawn){
                 Totoro();
-            }
+            }            
             break;
         case "x":
-            if (controls.object != null && controls.object.name == "Controlable SpotLight" && controls.object.getObjectByName("SpotLight") != null) {
+            if(controls.object != null &&controls.object.name == "Controlable SpotLight" && controls.object.getObjectByName("SpotLight") != null){
                 console.log("aaa");
-                controls.object.getObjectByName("SpotLight").intensity += 100;
-
+                var spot = controls.object.getObjectByName("SpotLight");
+                spot.intensity+=100;
+                if(spot.intensity>2000){
+                    spot.intensity = 2000;
+                }
+                
+                uniformsA.u_lightPower.value = (spot.intensity*1.0);
             }
             break;
         case "c":
-            if (controls.object != null && controls.object.name == "Controlable SpotLight" && controls.object.getObjectByName("SpotLight") != null) {
+            if(controls.object != null &&controls.object.name == "Controlable SpotLight" && controls.object.getObjectByName("SpotLight") != null){
                 var spot = controls.object.getObjectByName("SpotLight");
-                spot.intensity -= 100;
-                if (spot.intensity < 0) {
+                spot.intensity-=100;
+                if(spot.intensity<0){
                     spot.intensity = 0;
                 }
-            }
+                uniformsA.u_lightPower.value= (spot.intensity*1.0);
+            }            
             break;
         case "r":
-            controls.mode = modes[(modeIndex++) % modes.length];
+            controls.mode = modes[(modeIndex++)%modes.length];
             break;
-    }
+        case "p":
+            shaderToggle = !shaderToggle;
+            var meshes =  scene.children.filter((element) => element.name.split(" ")[0] == "DeletableAssetsObject" ||element.name.split(" ")[0] == "DeletableBuilding" );
+            if(shaderToggle){
+
+            }
+            else{
+
+            }
+            break;
+}
 });
 
 var start = 0;
-
+var clock = new THREE.Clock(true);
 function animate(time) {
-    //console.log(1000/(time-start));
+
+    uniformsB.u_time.value =clock.getElapsedTime();
+
+   
+   let spotLightWorld = new THREE.Vector3();
+   spotLight.getWorldPosition(spotLightWorld);
+
+   let spotLightTargetWorld = new THREE.Vector3();
+   spotLightTarget.getWorldPosition(spotLightTargetWorld);
+    var lightDirWorld = spotLightTargetWorld.clone().sub(spotLightWorld).normalize();
+
+    //console.log(aaa);
+    //console.log(camera.position);
+    uniformsA.u_lightDirection.value.set(lightDirWorld.x,lightDirWorld.y,lightDirWorld.z);
+    uniformsA.u_lightWorldPosition.value.set(cone.position.x,cone.position.y,cone.position.z);
+    uniformsA.u_viewWorldPosition.value.set(camera.position.x,camera.position.y,camera.position.z);
+
+
+
+
     start = time;
     raycaster.setFromCamera(mousePosition, camera);
-    intersects = raycaster.intersectObjects(scene.children.filter(
-        (element) => element.name == "PlaneMesh"));
+    intersects = raycaster.intersectObjects( scene.children.filter(
+                (element) => element.name == "PlaneMesh" ));
 
-
-    if (intersects.length > 0 && selectionMode != null) {
+    
+    if(intersects.length > 0 && selectionMode != null){       
         selectedAssetsObject.highlightMesh.visible = true;
         const intersect = intersects[0];
         var mousePosOnGrid = new THREE.Vector2(
@@ -544,7 +641,8 @@ function animate(time) {
         } else {
             selectedAssetsObject.highlightMeshMaterial.color.set(0x00ff00);
         }
-    } else if (selectedAssetsObject != null) {
+    }
+    else if(selectedAssetsObject != null){
         selectedAssetsObject.highlightMesh.visible = false;
     }
 
@@ -562,6 +660,7 @@ window.addEventListener("resize", function () {
 });
 
 
+
 const timer = ms => new Promise(res => setTimeout(res, ms));
 
 const generate = async () => {
@@ -570,11 +669,9 @@ const generate = async () => {
     for (let i = 0; i < roads.length; i++) {
         const element = roads[i];
         new TWEEN.Tween(element.position)
-            .to({y: -2}, 1000)
-            .start().onComplete(() => {
-            scene.remove(element);
-        })
-        ;
+                .to( { y:-2 }, 1000)
+                .start().onComplete(()=>{scene.remove(element);})
+                ;
     }
     roads.length = 0;
 
@@ -590,26 +687,26 @@ const generate = async () => {
             let building1 = buildings.find(building => building.id === node1);
             let building2 = buildings.find(building => building.id === node2);
             //console.log(building1.door,building2.door);
-            var dijkstraResult = dijkstra(grid, building1.door, building2.door).path;
+            var dijkstraResult = dijkstra(grid,building1.door,building2.door).path;
             for (let i = 0; i < dijkstraResult.length; i++) {
                 const element = dijkstraResult[i];
                 const yoll = yolFbxObject.fbxObject.clone();
-                yoll.position.set(element[1], 10, element[0]);
+                yoll.position.set(element[1],10,element[0]);
                 scene.add(yoll);
                 new TWEEN.Tween(yoll.position)
-                    .to({y: 0.1}, 1000)
-                    .start()
+                .to( { y:0.1 }, 1000)
+                .start()
                 ;
                 var tempScale = yoll.scale.clone();
-                yoll.scale.set(0, 0, 0);
-
+                yoll.scale.set(0,0,0);
+                
                 new TWEEN.Tween(yoll.scale)
-                    .to({x: tempScale.x, y: tempScale.y, z: tempScale.z}, 1000)
-                    .start()
+                .to({ x:tempScale.x,y:tempScale.y,z:tempScale.z}, 1000)
+                .start()
                 ;
                 roads.push(yoll);
                 await timer(100);
-
+                
             }
         }
         canTotoroSpawn = true;
@@ -620,7 +717,7 @@ const generate = async () => {
 var firstBuilding = null;
 var secondBuilding = null;
 
-function Totoro() {
+function Totoro(){
     raycaster.setFromCamera(mousePosition, camera);
     intersects = raycaster.intersectObjects(
         scene.children.filter((element) => element.name.split(" ")[0] == "DeletableBuilding")
@@ -631,14 +728,15 @@ function Totoro() {
             par = par.parent;
         }
         //console.log(par);
-        if (firstBuilding == null) {
+        if(firstBuilding == null){
             firstBuilding = par;
-        } else if (secondBuilding == null && par != firstBuilding) {
+        }
+        else if(secondBuilding == null && par != firstBuilding){
             secondBuilding = par;
         }
 
-        if (firstBuilding != null && secondBuilding != null) {
-            CreateTotoro(firstBuilding, secondBuilding);
+        if(firstBuilding != null && secondBuilding != null){
+            CreateTotoro(firstBuilding,secondBuilding);
             firstBuilding = null;
             secondBuilding = null;
 
@@ -646,8 +744,8 @@ function Totoro() {
     }
 }
 
-async function CreateTotoro(b1, b2) {
-
+async function CreateTotoro(b1,b2){
+    
     let building1 = buildings.find(building => building.id === b1.name);
     let building2 = buildings.find(building => building.id === b2.name);
 
@@ -663,42 +761,40 @@ async function CreateTotoro(b1, b2) {
     for (let i = 0; i < roads.length; i++) {
         const element = roads[i].position;
         gridRoadMap[element.z][element.x] = false;
-
+        
     }
     //console.log(gridRoadMap);
 
 
-    var dijkstraResult = dijkstra(gridRoadMap, building1.door, building2.door).path;
+    var dijkstraResult = dijkstra(gridRoadMap,building1.door,building2.door).path;
     //console.log(dijkstraResult);
 
     const totoro = totoroFBXObject.clone();
-    totoro.position.set(dijkstraResult[0][1], 0, dijkstraResult[0][0]);
+    totoro.position.set(dijkstraResult[0][1],0,dijkstraResult[0][0]);
     var tempScale = totoro.scale.clone();
     //console.log(tempScale);
-    totoro.scale.set(0, 0, 0);
+    totoro.scale.set(0,0,0);
     scene.add(totoro);
     var oneGridWalkTimeMS = 100;
     var scalingTimeMS = 100;
     new TWEEN.Tween(totoro.scale)
-        .to({x: tempScale.x, y: tempScale.y, z: tempScale.z}, scalingTimeMS)
-        .start();
+            .to({ x:tempScale.x, y:tempScale.y, z:tempScale.z}, scalingTimeMS)
+            .start();
     await timer(scalingTimeMS);
 
     //console.log(totoro.scale);
 
     for (let i = 1; i < dijkstraResult.length; i++) {
         new TWEEN.Tween(totoro.position)
-            .to({x: dijkstraResult[i][1], y: 0, z: dijkstraResult[i][0]}, oneGridWalkTimeMS)
+            .to({ x:dijkstraResult[i][1], y:0, z:dijkstraResult[i][0]}, oneGridWalkTimeMS)
             .start();
         await timer(oneGridWalkTimeMS);
     }
     //console.log("bb");
     new TWEEN.Tween(totoro.scale)
-        .to({x: 0, y: 0, z: 0}, scalingTimeMS)
-        .start().onComplete(() => {
-        scene.remove(totoro);
-    });
+            .to({ x:0, y:0, z:0}, scalingTimeMS)
+            .start().onComplete(()=>{scene.remove(totoro);});
     totoro.scale.set(tempScale);
-
+    
 
 }

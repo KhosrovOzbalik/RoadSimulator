@@ -1,22 +1,54 @@
 export const toonFragmentShader = `
-uniform vec3 lightDir;
-varying vec3 normal;
+precision mediump float;
 
-void main()
-{
-    float intensity;
-    vec4 color;
-    intensity = dot(lightDir,normalize(normal));
 
-    if (intensity > 0.95)
-        color = vec4(1.0,0.5,0.5,1.0);
-    else if (intensity > 0.5)
-        color = vec4(0.6,0.3,0.3,1.0);
-    else if (intensity > 0.25)
-        color = vec4(0.4,0.2,0.2,1.0);
-    else
-        color = vec4(0.2,0.1,0.1,1.0);
-    gl_FragColor = color;
+in vec3 v_normal;
+in vec3 v_surfaceToLight;
+in vec3 v_surfaceToView;
+
+uniform float u_lightPower;
+uniform vec3 u_lightDirection;
+uniform float u_limit;         
+
+void main() {
+  vec3 normal = normalize(v_normal);
+  vec3 surfaceToLightDirection = normalize(v_surfaceToLight);
+  vec3 surfaceToViewDirection = normalize(v_surfaceToView);
+  vec3 halfVector = normalize(surfaceToLightDirection + surfaceToViewDirection);
+
+  float intensity = max(dot(surfaceToLightDirection,-normalize(u_lightDirection)), 0.0);
+  if(intensity>= u_limit){
+    if (intensity > 0.98){
+      gl_FragColor = vec4(0.8, 0.8, 0.8, 1.0);
+    }  
+    else if (intensity > 0.90){
+      gl_FragColor = vec4(0.4, 0.4, 0.4, 1.0);
+    }
+    else if (intensity > 0.80){
+      gl_FragColor = vec4(0.2, 0.2, 0.2, 1.0);
+    }
+    else{
+      gl_FragColor = vec4(0.1, 0.1, 0.1, 1.0);
+    }
+  }
+  else{
+    gl_FragColor = vec4(0,0,0, 1.0);
+  }
+  
+  gl_FragColor.rgb *= (u_lightPower/2000.0);
 
 }
+`;
+
+export const havaliFragmentShader = `
+uniform float u_time;
+in vec3 v_position;
+
+void main() {
+    if (cos(2.0 * v_position.y + 3.0 * u_time) < 0.0) {
+        discard;
+    }
+    gl_FragColor = vec4(1,1,1,1);
+}
+
 `;
