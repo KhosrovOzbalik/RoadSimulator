@@ -116,7 +116,16 @@ scene.add(ambientLight);
 
 const assets = [];
 
-var denemefbxObject = new Building(
+var denemefbxObject = new AssetsObject(
+    new THREE.Vector2(1, 1),
+    new THREE.Vector2(1, 1),
+    null,
+    selection.BUILDING_1,
+    scene,
+    assets
+);
+/*
+new Building(
     new THREE.Vector2(1, 1),
     new THREE.Vector2(1, 1),
     null,
@@ -124,7 +133,7 @@ var denemefbxObject = new Building(
     selection.BUILDING_1,
     scene,
     assets
-);
+);*/
 var denemefbxObject2 = new Building(
     new THREE.Vector2(2, 2),
     new THREE.Vector2(2, 2),
@@ -141,7 +150,9 @@ const fbxLoader = new FBXLoader();
 fbxLoader.load("Assets/evyeni/ev.fbx", (object) => {
     object.scale.set(0.005, 0.01, 0.005);
     object.rotateY(-Math.PI / 2);
-    //console.log(object);
+    //object.type = "assets";
+    //console.log(object.type);
+
     let light;
     let yol;
     let tas;
@@ -164,7 +175,7 @@ var yolFbxObject = new AssetsObject(
     new THREE.Vector2(0,0),
     new THREE.Vector2(0,0),
     null,
-    selection.BUILDING_2,
+    null,
     scene,
     assets
 );
@@ -187,6 +198,7 @@ fbxLoader.load('Assets/yolyeni/yeniyol.fbx', (object) => {
 
 fbxLoader.load("Assets/building.fbx", (object) => {
     //console.log(object);
+//    object.type = "assets";
     object.scale.set(0.025, 0.03, 0.05);
     denemefbxObject2.fbxObject = object.clone();
 });
@@ -230,6 +242,7 @@ export var doorPoses = [];
 const raycaster = new THREE.Raycaster();
 let intersects;
 var aa = false;
+var canTotoroSpawn = false;
 window.addEventListener("mousedown", function (event) {
     event.stopImmediatePropagation();
     if (event.button === 0) {
@@ -254,7 +267,7 @@ window.addEventListener("mousedown", function (event) {
             if (!isIntersect) {
                 //console.log("inşaa");
                 const buildingClone = selectedAssetsObject.fbxObject.clone();
-                buildingClone.name =
+                buildingClone.name ="Deletable"+selectedAssetsObject.constructor.name+" "+
                     selectedAssetsObject.assetsId +
                     " " +
                     selectedAssetsObject.buildedId++ +
@@ -269,25 +282,30 @@ window.addEventListener("mousedown", function (event) {
                 scene.add(buildingClone);
                 selectedAssetsObject.SetOccupying(mousePosOnGrid, grid);
                 //console.log(mousePosOnGrid.clone().add(selectedAssetsObject.doorGridPos));
-                doorPoses.push(
-                    mousePosOnGrid.clone().add(selectedAssetsObject.doorGridPos)
-                );
+                
                 //console.log(buildingClone.name);
-                addCity(
-                    mousePosOnGrid
-                        .clone()
-                        .add(selectedAssetsObject.doorGridPos),
-                    buildingClone.name
-                );
-
+                //console.log(selectedAssetsObject.constructor.name);
+                if(selectedAssetsObject.constructor.name == "Building"){
+                    doorPoses.push(
+                        mousePosOnGrid.clone().add(selectedAssetsObject.doorGridPos)
+                    );
+                    addCity(
+                        mousePosOnGrid
+                            .clone()
+                            .add(selectedAssetsObject.doorGridPos),
+                        buildingClone.name
+                    );
+                }
+                
+                canTotoroSpawn = false;
                 //console.log(graph);
             }
         }
     } else if (event.button === 1) {
         raycaster.setFromCamera(mousePosition, camera);
-        intersects = raycaster.intersectObjects(
-            scene.children.filter((element) => element.type == "Group")
-        );
+        intersects = raycaster.intersectObjects(scene.children.
+            filter((element) => element.name.split(" ")[0] == "DeletableAssetsObject" ||element.name.split(" ")[0] == "DeletableBuilding" ));
+       
         if (intersects.length > 0) {
             //console.log(intersects[0]);
             var par = intersects[0].object;
@@ -295,18 +313,26 @@ window.addEventListener("mousedown", function (event) {
                 par = par.parent;
             }
             //console.log(doorPoses);
-            var doorPosV2 = assets[parseInt(par.name.split(" ")[0])].SetFree(
+            
+            var doorPosV2 = assets[parseInt(par.name.split(" ")[1])].SetFree(
                 new THREE.Vector2(par.position.x, par.position.z),
                 grid,
-                par.name.split(" ")[2],
+                par.name.split(" ")[3],
                 1
             );
-            doorPoses = doorPoses.filter((element) => {
-                return element.x != doorPosV2.x || element.y != doorPosV2.y;
-            });
+
+            if(par.name.split(" ")[0] == "DeletableBuilding"){
+                
+                doorPoses = doorPoses.filter((element) => {
+                    return element.x != doorPosV2.x || element.y != doorPosV2.y;
+                });
+                removeCity(par.name);
+            }
+            
 
             scene.remove(par);
-            removeCity(par.name);
+            canTotoroSpawn = false;
+            
             //console.log(graph);
         }
     } else if (event.button === 2) {
@@ -343,6 +369,10 @@ window.addEventListener("keydown", function (event) {
             selectedAssetsObject.RotateCCW(Math.PI / 2);
             break;
         case "z":
+            if(canTotoroSpawn){
+                Totoro();
+            }            
+            break;
     }
 });
 
@@ -399,7 +429,17 @@ window.addEventListener("resize", function () {
 const timer = ms => new Promise(res => setTimeout(res, ms));
 
 const generate = async () => {
-    resetRoads();
+    //resetRoads();
+
+    for (let i = 0; i < roads.length; i++) {
+        const element = roads[i];
+        new TWEEN.Tween(element.position)
+                .to( { y:-2 }, 1000)
+                .start().onComplete(()=>{scene.remove(element);})
+                ;
+    }
+    roads.length = 0;
+
 
     var mst = constructGraph();
     if (mst != null) {
@@ -408,6 +448,7 @@ const generate = async () => {
             const yol = mst[i];
             let node1 = yol.node1;
             let node2 = yol.node2;
+            console.log(node1);
             let building1 = buildings.find(building => building.id === node1);
             let building2 = buildings.find(building => building.id === node2);
             //console.log(building1.door,building2.door);
@@ -428,13 +469,83 @@ const generate = async () => {
                 .to({ x:tempScale.x,y:tempScale.y,z:tempScale.z}, 1000)
                 .start()
                 ;
+                roads.push(yoll);
                 await timer(100);
+                
             }
         }
-        
-    }
-
-    for (let i = 0; i < mst; i++) {
-        //addRoad(kordinat, obje)
+        canTotoroSpawn = true;
     }
 };
+
+
+var firstBuilding = null;
+var secondBuilding = null;
+
+function Totoro(){
+    raycaster.setFromCamera(mousePosition, camera);
+    intersects = raycaster.intersectObjects(
+        scene.children.filter((element) => element.name.split(" ")[0] == "DeletableBuilding")
+    );
+    if (intersects.length > 0) {
+        var par = intersects[0].object;
+        while (par.parent.type !== "Scene") {
+            par = par.parent;
+        }
+        //console.log(par);
+        if(firstBuilding == null){
+            firstBuilding = par;
+        }
+        else if(secondBuilding == null){
+            secondBuilding = par;
+        }
+
+        if(firstBuilding != null && secondBuilding != null){
+            CreateTotoro(firstBuilding,secondBuilding);
+            firstBuilding = null;
+            secondBuilding = null;
+
+        }
+    }
+}
+
+async function CreateTotoro(b1,b2){
+    //console.log(roads);
+    let building1 = buildings.find(building => building.id === b1.name);
+    let building2 = buildings.find(building => building.id === b2.name);
+
+    var gridRoadMap = [];
+    for (let i = 0; i < GRID_SIZE; i++) {
+        let gridItem = [];
+        for (let j = 0; j < GRID_SIZE; j++) {
+            gridItem.push(true);
+        }
+        gridRoadMap.push(gridItem);
+    }
+    //console.log(gridRoadMap);
+    for (let i = 0; i < roads.length; i++) {
+        const element = roads[i].position;
+        gridRoadMap[element.z][element.x] = false;
+        
+    }
+    //console.log(gridRoadMap);
+
+
+    var dijkstraResult = dijkstra(gridRoadMap,building1.door,building2.door).path;
+    //console.log(dijkstraResult);
+
+    const totoro = yolFbxObject.fbxObject.clone();
+    totoro.position.set(dijkstraResult[0][1],1,dijkstraResult[0][0]);
+    scene.add(totoro);
+    var oneGridWalkTimeMS = 100;
+
+
+
+    for (let i = 1; i < dijkstraResult.length; i++) {
+        new TWEEN.Tween(totoro.position)
+            .to({ x:dijkstraResult[i][1], y:1, z:dijkstraResult[i][0]}, oneGridWalkTimeMS)
+            .start();
+        await timer(oneGridWalkTimeMS);
+    }
+
+}

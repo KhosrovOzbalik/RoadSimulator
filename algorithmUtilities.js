@@ -8,9 +8,15 @@ function minimumSpanningTree(graph) {
     const startVertex = Object.keys(graph.doors)[0];
     visited[startVertex] = true;
 
-    graph.doors[startVertex].forEach(edge => {
-        edges.push({node1: startVertex, node2: edge.node, weight: edge.weight});
-    });
+    
+
+    if(Object.keys(graph.doors).length){
+        graph.doors[startVertex].forEach(edge => {
+            edges.push({node1: startVertex, node2: edge.node, weight: edge.weight});
+        });
+    }
+
+    
 
     const mst = [];
 
