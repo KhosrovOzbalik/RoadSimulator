@@ -22,7 +22,6 @@ const selectYellowBtn = document.getElementById("selectYellow");
 const selectWhiteBtn = document.getElementById("selectWhite");
 const selectRockBtn = document.getElementById("selectRock");
 const selectTreeBtn = document.getElementById("selectTree");
-const selectDeleteBtn = document.getElementById("selectDelete");
 const generateBtn = document.getElementById("generate");
 
 // Flag to indicate the current selection mode
@@ -51,10 +50,6 @@ selectTreeBtn.addEventListener("click", function () {
     console.log("Selected: Tree");
 });
 
-selectDeleteBtn.addEventListener("click", function () {
-    selectionMode = selection.DELETE;
-    console.log("Selected: Delete");
-});
 generateBtn.addEventListener("click", function () {
     generate();
 });
@@ -208,7 +203,7 @@ fbxLoader.load('Assets/yolyeni/yeniyol.fbx', (object) => {
     
 })
 
-fbxLoader.load("Assets/building.fbx", (object) => {
+fbxLoader.load("Assets/building1/building.fbx", (object) => {
     //console.log(object);
 //    object.type = "assets";
     object.scale.set(0.025, 0.03, 0.05);
