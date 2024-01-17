@@ -52,3 +52,15 @@ void main() {
 }
 
 `;
+
+
+export const desFragmentShader = `
+uniform float u_time;
+in vec3 pos;
+void main() {
+  gl_FragColor = vec4(0.5,0.5,0.5,1.0);
+  gl_FragColor.r += sin(u_time *pos.x/1000.0)/2.0;
+  gl_FragColor.g += cos(u_time*pos.y/1000.0)/2.0;
+  gl_FragColor.b += sin(2.0*u_time*pos.z/1000.0)/2.0;
+}
+`;

@@ -8,8 +8,8 @@ import {GRID_SIZE, selection} from "./globals";
 import {resetRoads, addRoad, AssetsObject, Building, Road} from "./objects";
 import {addCity, graph, grid, removeCity, constructGraph, roads, buildings} from "./datas";
 import {dijkstra} from "./algorithmUtilities";
-import {toonVertexShader, havaliVertexShader} from "./Shaders/toonVertexShader";
-import {toonFragmentShader, havaliFragmentShader} from "./Shaders/toonFragmentShader";
+import {toonVertexShader, havaliVertexShader, desVertexShader} from "./Shaders/toonVertexShader";
+import {toonFragmentShader, havaliFragmentShader, desFragmentShader} from "./Shaders/toonFragmentShader";
 import {degToRad} from "three/src/math/MathUtils";
 
 const renderer = new THREE.WebGLRenderer({canvas: canvas, antialias: true});
@@ -215,6 +215,15 @@ const havaliMat = new THREE.ShaderMaterial({
     uniforms: uniformsB,
     vertexShader: havaliVertexShader,
     fragmentShader: havaliFragmentShader
+});
+
+var uniformsC = {
+    u_time: {type: "f", value: 0.0}
+};
+const desMat = new THREE.ShaderMaterial({
+    uniforms: uniformsC,
+    vertexShader: desVertexShader,
+    fragmentShader: desFragmentShader
 });
 
 
@@ -650,7 +659,7 @@ var spotlightState = 0;
 var modes = ["translate", "rotate"];
 var modeIndex = 0;
 var shaderIndex = 0;
-var shadersMat = [toonMat, havaliMat];
+var shadersMat = [toonMat, havaliMat,desMat];
 window.addEventListener("keydown", function (event) {
     event.stopImmediatePropagation();
     //console.log("tuşa basıldı");
@@ -722,6 +731,7 @@ var clock = new THREE.Clock(true);
 function animate(time) {
 
     uniformsB.u_time.value = clock.getElapsedTime();
+    uniformsC.u_time.value = clock.getElapsedTime();
 
 
     let spotLightWorld = new THREE.Vector3();
