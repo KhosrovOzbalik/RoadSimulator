@@ -45,7 +45,7 @@ uniform float u_time;
 in vec3 v_position;
 
 void main() {
-    if (cos(2.0 * v_position.y + 3.0 * u_time) < 0.0) {
+    if (sin(2.0 * v_position.y + 4.0 * u_time + 5.0*v_position.z) < 0.0) {
         discard;
     }
     gl_FragColor = vec4(v_position.x,v_position.y,v_position.z,1);
