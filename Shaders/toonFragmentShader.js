@@ -48,7 +48,7 @@ void main() {
     if (cos(2.0 * v_position.y + 3.0 * u_time) < 0.0) {
         discard;
     }
-    gl_FragColor = vec4(1,1,1,1);
+    gl_FragColor = vec4(v_position.x,v_position.y,v_position.z,1);
 }
 
 `;

@@ -18,7 +18,7 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 
 renderer.setSize(window.innerWidth, window.innerHeight);
-console.log(window.innerWidth, window.innerHeight);
+//console.log(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
 const selectYellowBtn = document.getElementById("selectYellow");
@@ -354,6 +354,9 @@ const controls = new TransformControls(camera, renderer.domElement);
 scene.add(controls);
 
 
+
+
+
 function FindSelectedAssetsObject() {
     if (selectedAssetsObject != null) {
         selectedAssetsObject.highlightMesh.visible = false;
@@ -377,6 +380,10 @@ const raycaster = new THREE.Raycaster();
 let intersects;
 var aa = false;
 var canTotoroSpawn = false;
+var allMatObjs = [];
+
+
+
 window.addEventListener("mousedown", function (event) {
     event.stopImmediatePropagation();
     if (event.button === 0) {
@@ -420,6 +427,7 @@ window.addEventListener("mousedown", function (event) {
                         mousePosOnGrid.y
                     );
                     scene.add(buildingClone);
+                    allMatObjs.push(buildingClone);
                     selectedAssetsObject.SetOccupying(mousePosOnGrid, grid);
                     //console.log(mousePosOnGrid.clone().add(selectedAssetsObject.doorGridPos));
 
@@ -480,6 +488,8 @@ window.addEventListener("mousedown", function (event) {
 
 
             scene.remove(par);
+            allMatObjs = allMatObjs.filter(
+                (element) => element != par);
             canTotoroSpawn = false;
 
             //console.log(graph);
@@ -494,7 +504,8 @@ window.addEventListener("contextmenu", function (event) {
 var spotlightState = 0;
 var modes = ["translate", "rotate"];
 var modeIndex = 0;
-var shaderToggle = false;
+var shaderIndex = 0;
+var shadersMat = [toonMat,havaliMat];
 window.addEventListener("keydown", function (event) {
     event.stopImmediatePropagation();
     //console.log("tuşa basıldı");
@@ -552,16 +563,21 @@ window.addEventListener("keydown", function (event) {
             controls.mode = modes[(modeIndex++) % modes.length];
             break;
         case "p":
-            shaderToggle = !shaderToggle;
-            var meshes = scene.children.filter((element) => element.name.split(" ")[0] == "DeletableAssetsObject" || element.name.split(" ")[0] == "DeletableBuilding");
-            if (shaderToggle) {
-
-            } else {
-
+            console.log("aa");
+            shaderIndex  = (++shaderIndex)%shadersMat.length;
+            for (let id = 0; id < allMatObjs.length; id++) {
+                const element = allMatObjs[id];
+                element.traverse(function (child) {
+                    if(child.isMesh){
+                        child.material = shadersMat[shaderIndex];
+                    }
+                });
+                
             }
             break;
         case "k":
             spotLight.visible = !spotLight.visible;
+            break;
     }
 });
 
