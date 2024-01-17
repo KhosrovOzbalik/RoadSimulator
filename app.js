@@ -27,6 +27,8 @@ const selectRockBtn = document.getElementById("selectRock");
 const selectTreeBtn = document.getElementById("selectTree");
 const generateBtn = document.getElementById("generate");
 const changeShaderBtn = document.getElementById("shaders");
+const spotlightSlider = document.getElementById("spotlightCheckbox");
+spotlightSlider.click();
 
 // Flag to indicate the current selection mode
 let selectionMode = null; // Default to yellow cube
@@ -57,6 +59,10 @@ selectTreeBtn.addEventListener("click", function () {
 generateBtn.addEventListener("click", function () {
     generate();
 });
+
+spotlightSlider.addEventListener("click", function () {
+    spotLight.visible = !spotLight.visible;
+})
 
 changeShaderBtn.addEventListener("click", function () {
     shaderIndex = (++shaderIndex) % shadersMat.length;
@@ -706,9 +712,6 @@ window.addEventListener("keydown", function (event) {
             break;
         case "r":
             controls.mode = modes[(modeIndex++) % modes.length];
-            break;
-        case "k":
-            spotLight.visible = !spotLight.visible;
             break;
     }
 });
