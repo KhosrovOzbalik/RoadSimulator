@@ -96,7 +96,7 @@ const planeMesh = new THREE.Mesh(
     new THREE.MeshPhongMaterial({
         side: THREE.DoubleSide,
         visible: true,
-        color: "green",
+        color: "#66cdaa",
     })
 );
 planeMesh.receiveShadow = true;
@@ -105,6 +105,13 @@ planeMesh.name = "PlaneMesh";
 planeMesh.position.set(GRID_SIZE / 2.0 - 0.5, 0, GRID_SIZE / 2.0 - 0.5,);
 planeMesh.rotateX(-Math.PI / 2);
 scene.add(planeMesh);
+var clonePlaneMesh = planeMesh.clone();
+clonePlaneMesh.name = "aa";
+clonePlaneMesh.position.set(GRID_SIZE / 2.0 - 0.5, 0, GRID_SIZE / 2.0 - 0.5);
+clonePlaneMesh.scale.set(3,3,3);
+scene.add(clonePlaneMesh);
+    
+
 
 const gridHelper = new THREE.GridHelper(GRID_SIZE, GRID_SIZE); // Change size to represent a 3x3 grid
 gridHelper.position.set(GRID_SIZE / 2.0 - 0.5, 0.01, GRID_SIZE / 2.0 - 0.5);
@@ -266,7 +273,7 @@ fbxLoader.load("Assets/totoro/totoro.fbx", (object) => {
 
 
 var dagFbxObject = new AssetsObject(
-    new THREE.Vector2(2, 1),
+    new THREE.Vector2(2, 2),
     new THREE.Vector2(2, 2),
     null,
     selection.ROCK,
@@ -275,31 +282,157 @@ var dagFbxObject = new AssetsObject(
 );
 
 
-const havaliMat2 = new THREE.ShaderMaterial({
-    uniforms: {
-        u_time: {type: "f", value: uniformsB.u_time.value},
-        texture1: {type: "t", value: new THREE.TextureLoader().load('Assets/dag/Mountain.png')}
-    },
-    vertexShader: havaliVertexShader,
-    fragmentShader: havaliFragmentShader
-});
 
-fbxLoader.load('Assets/dag/dag.fbx', (object) => {
+fbxLoader.load('Assets/rock/rock.fbx', (object) => {
 
     //console.log(object);
+    let light;
+    let cam;
     object.traverse(function (child) {
         if (child.isMesh) {
             child.castShadow = true;
             child.receiveShadow = true;
         }
+        if (child.type == "PointLight") {
+            light = child;
+        } else if (child.type == "PerspectiveCamera") {
+            cam = child;
+        }
+        
     })
-    object.rotateX(-Math.PI / 2);
-    object.scale.set(.0008, .0006, .0008);
+    object.remove(light, cam);
+    //object.rotateX(-Math.PI / 2);
+    object.scale.set(.008, .008, .008);
     object.receiveShadow = true;
     object.castShadow = true;
     dagFbxObject.fbxObject = object.clone();
+    //scene.add(object);
+    //object.position.set(30,0,30);
 
 })
+
+var treeFbxObject =  new AssetsObject(
+    new THREE.Vector2(1, 1),
+    new THREE.Vector2(1, 1),
+    null,
+    selection.TREE,
+    scene,
+    assets
+);
+
+let controalbleTreeFBX ;
+
+fbxLoader.load('Assets/agac/tree.fbx', (object) => {
+    let light;
+    let cam;
+    //console.log(object);
+    object.traverse(function (child) {
+        //console.log(child);
+        if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+        }
+        if (child.type == "PointLight") {
+            light = child;
+        } else if (child.type == "PerspectiveCamera") {
+            cam = child;
+        }
+    })
+    //object.rotateX(-Math.PI / 2);
+    object.scale.set(.015, .015, .015);
+    object.receiveShadow = true;
+    object.castShadow = true;
+    object.remove(light, cam);
+    treeFbxObject.fbxObject = object.clone();
+    controalbleTreeFBX = object.clone();
+    controalbleTreeFBX.name = "Controlable Tree";
+
+    for (let i = 0; i < 80; i++) {
+        
+        var randX = Math.random()*180-60;
+        var randZ = Math.random()*180 -60;
+        if(randX>0 && randX<60 && randZ>0 && randZ<60){
+            continue;
+        }
+
+        var cloneTree = controalbleTreeFBX.clone();
+        cloneTree.position.set(randX,0,randZ);
+        allMatObjs.push(cloneTree);
+        scene.add(cloneTree);
+    }
+
+})
+
+
+let cloudFbxObject1;
+fbxLoader.load('Assets/cloud/cloud1.fbx', (object) => {
+    let light;
+    let cam;
+    //console.log(object);
+    object.traverse(function (child) {
+        //console.log(child);
+        if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+        }
+        if (child.type == "PointLight") {
+            light = child;
+        } else if (child.type == "PerspectiveCamera") {
+            cam = child;
+        }
+    })
+    //object.rotateX(-Math.PI / 2);
+    object.scale.set(.01, .01, .01);
+    object.receiveShadow = true;
+    object.castShadow = true;
+    object.remove(light, cam);
+    cloudFbxObject1 = object.clone();
+    cloudFbxObject1.name = "Controlable Cloud1";
+    scene.add(cloudFbxObject1);
+    cloudFbxObject1.position.set(30,10,30);
+    allMatObjs.push(cloudFbxObject1);
+
+    var clone2 = cloudFbxObject1.clone();
+    scene.add(clone2);
+    clone2.position.set(50,10,50);
+    allMatObjs.push(clone2);
+})
+
+let rock;
+fbxLoader.load('Assets/dag/dag.fbx', (object) => {
+    let light;
+    let cam;
+    //console.log(object);
+    object.traverse(function (child) {
+        console.log(child);
+        if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+        }
+        if (child.type == "PointLight") {
+            light = child;
+        } else if (child.type == "PerspectiveCamera") {
+            cam = child;
+        }
+    })
+    object.rotateX(-Math.PI / 2);
+    object.scale.set(.01, .01, .01);
+    object.receiveShadow = true;
+    object.castShadow = true;
+    object.remove(light, cam);
+    rock = object.clone();
+    rock.name = "Controlable Mountain";
+    scene.add(rock);
+    rock.position.set(-30,15,-30);
+    allMatObjs.push(rock);
+
+    var clone2 = rock.clone();
+    scene.add(clone2);
+    clone2.position.set(90,15,90);
+    allMatObjs.push(clone2);
+})
+
+
 
 
 window.addEventListener("mousemove", function (e) {
@@ -317,11 +450,11 @@ window.addEventListener("mousemove", function (e) {
 /*
 const pointLight = new THREE.PointLight(0xff0000, 500);
 pointLight.position.set(30, 20, 30);
-scene.add(pointLight);
+scene.add(pointLight);*/
 
 const ambientLight = new THREE.AmbientLight();
 ambientLight.position.set(30, 20, 30);
-scene.add(ambientLight);*/
+scene.add(ambientLight);
 
 const spotLight = new THREE.SpotLight(0xffffff, 1000);
 spotLight.castShadow = true;
@@ -527,9 +660,15 @@ window.addEventListener("keydown", function (event) {
             camera.position.x += 1;
             break;
         case "e":
+            if(selectedAssetsObject == null){
+                break;
+            }
             selectedAssetsObject.RotateCCW(-Math.PI / 2);
             break;
         case "q":
+            if(selectedAssetsObject == null){
+                break;
+            }
             selectedAssetsObject.RotateCCW(Math.PI / 2);
             break;
         case "z":
