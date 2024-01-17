@@ -26,6 +26,7 @@ const selectWhiteBtn = document.getElementById("selectWhite");
 const selectRockBtn = document.getElementById("selectRock");
 const selectTreeBtn = document.getElementById("selectTree");
 const generateBtn = document.getElementById("generate");
+const changeShaderBtn = document.getElementById("shaders");
 
 // Flag to indicate the current selection mode
 let selectionMode = null; // Default to yellow cube
@@ -55,6 +56,19 @@ selectTreeBtn.addEventListener("click", function () {
 
 generateBtn.addEventListener("click", function () {
     generate();
+});
+
+changeShaderBtn.addEventListener("click", function () {
+    shaderIndex = (++shaderIndex) % shadersMat.length;
+    for (let id = 0; id < allMatObjs.length; id++) {
+        const element = allMatObjs[id];
+        element.traverse(function (child) {
+            if (child.isMesh) {
+                child.material = shadersMat[shaderIndex];
+            }
+        });
+
+    }
 });
 
 const scene = new THREE.Scene();
@@ -108,9 +122,8 @@ scene.add(planeMesh);
 var clonePlaneMesh = planeMesh.clone();
 clonePlaneMesh.name = "aa";
 clonePlaneMesh.position.set(GRID_SIZE / 2.0 - 0.5, 0, GRID_SIZE / 2.0 - 0.5);
-clonePlaneMesh.scale.set(3,3,3);
+clonePlaneMesh.scale.set(3, 3, 3);
 scene.add(clonePlaneMesh);
-    
 
 
 const gridHelper = new THREE.GridHelper(GRID_SIZE, GRID_SIZE); // Change size to represent a 3x3 grid
@@ -282,7 +295,6 @@ var dagFbxObject = new AssetsObject(
 );
 
 
-
 fbxLoader.load('Assets/rock/rock.fbx', (object) => {
 
     //console.log(object);
@@ -298,7 +310,7 @@ fbxLoader.load('Assets/rock/rock.fbx', (object) => {
         } else if (child.type == "PerspectiveCamera") {
             cam = child;
         }
-        
+
     })
     object.remove(light, cam);
     //object.rotateX(-Math.PI / 2);
@@ -311,7 +323,7 @@ fbxLoader.load('Assets/rock/rock.fbx', (object) => {
 
 })
 
-var treeFbxObject =  new AssetsObject(
+var treeFbxObject = new AssetsObject(
     new THREE.Vector2(1, 1),
     new THREE.Vector2(1, 1),
     null,
@@ -320,7 +332,7 @@ var treeFbxObject =  new AssetsObject(
     assets
 );
 
-let controalbleTreeFBX ;
+let controalbleTreeFBX;
 
 fbxLoader.load('Assets/agac/tree.fbx', (object) => {
     let light;
@@ -348,15 +360,15 @@ fbxLoader.load('Assets/agac/tree.fbx', (object) => {
     controalbleTreeFBX.name = "Controlable Tree";
 
     for (let i = 0; i < 80; i++) {
-        
-        var randX = Math.random()*180-60;
-        var randZ = Math.random()*180 -60;
-        if(randX>0 && randX<60 && randZ>0 && randZ<60){
+
+        var randX = Math.random() * 180 - 60;
+        var randZ = Math.random() * 180 - 60;
+        if (randX > 0 && randX < 60 && randZ > 0 && randZ < 60) {
             continue;
         }
 
         var cloneTree = controalbleTreeFBX.clone();
-        cloneTree.position.set(randX,0,randZ);
+        cloneTree.position.set(randX, 0, randZ);
         allMatObjs.push(cloneTree);
         scene.add(cloneTree);
     }
@@ -389,12 +401,12 @@ fbxLoader.load('Assets/cloud/cloud1.fbx', (object) => {
     cloudFbxObject1 = object.clone();
     cloudFbxObject1.name = "Controlable Cloud1";
     scene.add(cloudFbxObject1);
-    cloudFbxObject1.position.set(30,10,30);
+    cloudFbxObject1.position.set(30, 10, 30);
     allMatObjs.push(cloudFbxObject1);
 
     var clone2 = cloudFbxObject1.clone();
     scene.add(clone2);
-    clone2.position.set(50,10,50);
+    clone2.position.set(50, 10, 50);
     allMatObjs.push(clone2);
 })
 
@@ -423,16 +435,14 @@ fbxLoader.load('Assets/dag/dag.fbx', (object) => {
     rock = object.clone();
     rock.name = "Controlable Mountain";
     scene.add(rock);
-    rock.position.set(-30,15,-30);
+    rock.position.set(-30, 15, -30);
     allMatObjs.push(rock);
 
     var clone2 = rock.clone();
     scene.add(clone2);
-    clone2.position.set(90,15,90);
+    clone2.position.set(90, 15, 90);
     allMatObjs.push(clone2);
 })
-
-
 
 
 window.addEventListener("mousemove", function (e) {
@@ -487,9 +497,6 @@ const controls = new TransformControls(camera, renderer.domElement);
 scene.add(controls);
 
 
-
-
-
 function FindSelectedAssetsObject() {
     if (selectedAssetsObject != null) {
         selectedAssetsObject.highlightMesh.visible = false;
@@ -514,7 +521,6 @@ let intersects;
 var aa = false;
 var canTotoroSpawn = false;
 var allMatObjs = [];
-
 
 
 window.addEventListener("mousedown", function (event) {
@@ -638,7 +644,7 @@ var spotlightState = 0;
 var modes = ["translate", "rotate"];
 var modeIndex = 0;
 var shaderIndex = 0;
-var shadersMat = [toonMat,havaliMat];
+var shadersMat = [toonMat, havaliMat];
 window.addEventListener("keydown", function (event) {
     event.stopImmediatePropagation();
     //console.log("tuşa basıldı");
@@ -660,13 +666,13 @@ window.addEventListener("keydown", function (event) {
             camera.position.x += 1;
             break;
         case "e":
-            if(selectedAssetsObject == null){
+            if (selectedAssetsObject == null) {
                 break;
             }
             selectedAssetsObject.RotateCCW(-Math.PI / 2);
             break;
         case "q":
-            if(selectedAssetsObject == null){
+            if (selectedAssetsObject == null) {
                 break;
             }
             selectedAssetsObject.RotateCCW(Math.PI / 2);
@@ -700,19 +706,6 @@ window.addEventListener("keydown", function (event) {
             break;
         case "r":
             controls.mode = modes[(modeIndex++) % modes.length];
-            break;
-        case "p":
-            console.log("aa");
-            shaderIndex  = (++shaderIndex)%shadersMat.length;
-            for (let id = 0; id < allMatObjs.length; id++) {
-                const element = allMatObjs[id];
-                element.traverse(function (child) {
-                    if(child.isMesh){
-                        child.material = shadersMat[shaderIndex];
-                    }
-                });
-                
-            }
             break;
         case "k":
             spotLight.visible = !spotLight.visible;
